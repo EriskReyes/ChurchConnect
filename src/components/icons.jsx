@@ -1,0 +1,46 @@
+const S = ({ size = 20, sw = 1.7, children, ...p }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth={sw} strokeLinecap="round"
+    strokeLinejoin="round" {...p}>{children}</svg>
+);
+
+export const Icon = {
+  Home: (p) => <S {...p}><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/><path d="M9.5 21v-6h5v6"/></S>,
+  Calendar: (p) => <S {...p}><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></S>,
+  Users: (p) => <S {...p}><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5"/><path d="M16 5.2a3 3 0 0 1 0 5.8M17.5 14.7c2.2.5 3.8 2.4 3.8 5"/></S>,
+  Hands: (p) => <S {...p}><path d="M12 21s-6.5-4.3-8.6-8.2C2 10.2 2.8 7 5.6 7c1.7 0 2.7 1 3.2 1.9"/><path d="M12 21s6.5-4.3 8.6-8.2C22 10.2 21.2 7 18.4 7c-1.7 0-2.7 1-3.2 1.9"/><path d="M12 9.5V21"/></S>,
+  Heart: (p) => <S {...p}><path d="M12 20s-7-4.5-9.2-9C1.3 8 2.8 4.5 6.2 4.5c2 0 3.3 1.2 4 2.4.7-1.2 2-2.4 4-2.4 3.4 0 4.9 3.5 3.4 6.5C19 15.5 12 20 12 20Z"/></S>,
+  Gift: (p) => <S {...p}><rect x="3.5" y="9" width="17" height="11.5" rx="1.5"/><path d="M3 13h18M12 9v11.5"/><path d="M12 9S10.5 4.5 8 4.5 5.5 8 8 9M12 9s1.5-4.5 4-4.5S18.5 8 16 9"/></S>,
+  Book: (p) => <S {...p}><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15.5H5.5A1.5 1.5 0 0 0 4 21Z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v15.5h5.5a1.5 1.5 0 0 1 1.5 1.5Z"/></S>,
+  Mic: (p) => <S {...p}><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></S>,
+  Doc: (p) => <S {...p}><path d="M6 2.5h7l5 5V21a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z"/><path d="M13 2.5V8h5M8.5 13h7M8.5 16.5h7"/></S>,
+  Image: (p) => <S {...p}><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4 3 2.5L16 11l4 4.5"/></S>,
+  Megaphone: (p) => <S {...p}><path d="M4 9.5v5a1 1 0 0 0 1 1h2l9 4.5V4L7 8.5H5a1 1 0 0 0-1 1Z"/><path d="M7 15.5v3.5M19 9a3 3 0 0 1 0 6"/></S>,
+  Chat: (p) => <S {...p}><path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3.5V16.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"/><path d="M8 9.5h8M8 12.5h5"/></S>,
+  Chart: (p) => <S {...p}><path d="M4 4v16h16"/><path d="M8 16v-4M12 16V9M16 16v-6"/></S>,
+  Settings: (p) => <S {...p}><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.5M12 19v2.5M21.5 12H19M5 12H2.5M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8M18.4 18.4l-1.8-1.8M7.4 7.4 5.6 5.6"/></S>,
+  Cross: (p) => <S {...p}><path d="M9.5 2.5h5V8H20v5h-5.5v8.5h-5V13H4V8h5.5Z"/></S>,
+  Search: (p) => <S {...p}><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.6-3.6"/></S>,
+  Bell: (p) => <S {...p}><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></S>,
+  Plus: (p) => <S {...p}><path d="M12 5v14M5 12h14"/></S>,
+  Filter: (p) => <S {...p}><path d="M3 5h18l-7 8v6l-4-2v-4Z"/></S>,
+  Dots: (p) => <S {...p}><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></S>,
+  Chevron: (p) => <S {...p}><path d="m9 6 6 6-6 6"/></S>,
+  ChevronDown: (p) => <S {...p}><path d="m6 9 6 6 6-6"/></S>,
+  Check: (p) => <S {...p}><path d="m5 12.5 4.5 4.5L19 6.5"/></S>,
+  Clock: (p) => <S {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></S>,
+  Pin: (p) => <S {...p}><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></S>,
+  Mail: (p) => <S {...p}><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></S>,
+  Phone: (p) => <S {...p}><path d="M5 3.5h3l1.5 4.5L7.5 9.5a11 11 0 0 0 5 5l1.5-2 4.5 1.5v3a2 2 0 0 1-2 2A15 15 0 0 1 3 5.5a2 2 0 0 1 2-2Z"/></S>,
+  Play: (p) => <S {...p}><path d="M7 5.5 18 12 7 18.5Z"/></S>,
+  Download: (p) => <S {...p}><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 19h16"/></S>,
+  Logout: (p) => <S {...p}><path d="M14 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h8"/><path d="M17 8.5 20.5 12 17 15.5M20 12H10"/></S>,
+  Eye: (p) => <S {...p}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.7"/></S>,
+  Sun: (p) => <S {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M22 12h-2.5M4.5 12H2M19 5l-1.8 1.8M6.8 17.2 5 19M19 19l-1.8-1.8M6.8 6.8 5 5"/></S>,
+  Moon: (p) => <S {...p}><path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z"/></S>,
+  Sparkle: (p) => <S {...p}><path d="M12 3.5 13.6 9 19 10.6 13.6 12.2 12 17.5 10.4 12.2 5 10.6 10.4 9Z"/></S>,
+  Edit: (p) => <S {...p}><path d="M14 5l5 5M4 20l1-4L16 5l3 3L8 19Z"/></S>,
+  Trash: (p) => <S {...p}><path d="M4 6.5h16M9 6.5V4.5h6v2M6 6.5 7 20a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13.5"/></S>,
+  Tag: (p) => <S {...p}><path d="M3 12V4h8l10 10-7 7Z"/><circle cx="7.5" cy="8.5" r="1.3"/></S>,
+  Arrow: (p) => <S {...p}><path d="M5 12h14m0 0-6-6m6 6-6 6"/></S>,
+};

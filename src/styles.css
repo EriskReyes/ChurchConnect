@@ -1,0 +1,139 @@
+/* ChurchConnect — "Sanctuary" design system
+   Calm, airy, serene. Muted blue + sage. */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  --primary: #3B5BA5;            /* overridable by Tweaks */
+  --font-head: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* radii */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* density-driven (overwritten by [data-density]) */
+  --pad-card: 24px;
+  --row-h: 56px;
+  --gap: 22px;
+  --fs-base: 15px;
+}
+
+/* ---------- THEME: LIGHT ---------- */
+[data-theme="light"] {
+  --bg: #EBF0F8;
+  --bg-grad-a: #EEF3FA;
+  --bg-grad-b: #E4EAF4;
+  --surface: #FFFFFF;
+  --surface-2: #F5F8FD;
+  --surface-3: #EDF2F9;
+  --border: #E2E9F3;
+  --border-strong: #D2DCEB;
+  --text: #1B2840;
+  --text-muted: #5E6E86;
+  --text-faint: #93A0B5;
+  --accent: #6E9B7E;            /* sage */
+  --accent-soft: #E7F0EA;
+  --warn: #C98A3C;
+  --warn-soft: #FBF0DF;
+  --danger: #C25B62;
+  --danger-soft: #FAE7E8;
+  --shadow-sm: 0 1px 2px rgba(27,40,64,.06), 0 1px 3px rgba(27,40,64,.04);
+  --shadow-md: 0 4px 14px rgba(27,40,64,.07), 0 2px 6px rgba(27,40,64,.04);
+  --shadow-lg: 0 18px 48px rgba(27,40,64,.13), 0 6px 16px rgba(27,40,64,.06);
+  --primary-ink: #fff;
+  --on-primary-soft: var(--primary);
+}
+
+/* ---------- THEME: DARK ---------- */
+[data-theme="dark"] {
+  --bg: #0E1521;
+  --bg-grad-a: #111A29;
+  --bg-grad-b: #0C121C;
+  --surface: #18222F;
+  --surface-2: #141D29;
+  --surface-3: #1F2A39;
+  --border: #283442;
+  --border-strong: #354456;
+  --text: #E9EFF7;
+  --text-muted: #94A4B8;
+  --text-faint: #677586;
+  --accent: #82B394;
+  --accent-soft: #1C2C24;
+  --warn: #D8A45C;
+  --warn-soft: #2C2417;
+  --danger: #DB7A80;
+  --danger-soft: #2C1B1D;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 6px 20px rgba(0,0,0,.4);
+  --shadow-lg: 0 24px 60px rgba(0,0,0,.55);
+  --primary-ink: #fff;
+  --on-primary-soft: color-mix(in srgb, var(--primary) 35%, #fff);
+}
+
+/* derived primary tints (work with overridable --primary) */
+[data-theme] {
+  --primary-soft: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  --primary-softer: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  --primary-border: color-mix(in srgb, var(--primary) 30%, var(--border));
+  --primary-hover: color-mix(in srgb, var(--primary) 88%, #000);
+  --ring: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* ---------- DENSITY ---------- */
+[data-density="compact"]  { --pad-card: 16px; --row-h: 46px; --gap: 14px; --fs-base: 14px; }
+[data-density="regular"]  { --pad-card: 24px; --row-h: 56px; --gap: 22px; --fs-base: 15px; }
+[data-density="comfy"]    { --pad-card: 32px; --row-h: 66px; --gap: 30px; --fs-base: 16px; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root { height: 100vh; }
+
+.app-shell {
+  height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 12% -8%, var(--bg-grad-a), transparent 60%),
+    radial-gradient(1000px 700px at 100% 0%, var(--bg-grad-b), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  display: flex;
+  overflow: hidden;
+  transition: background .4s ease, color .25s ease;
+}
+
+h1,h2,h3,h4,h5 { font-family: var(--font-head); margin: 0; color: var(--text); letter-spacing: -0.01em; }
+p { margin: 0; }
+button { font-family: var(--font-body); cursor: pointer; }
+input, select, textarea { font-family: var(--font-body); }
+a { color: inherit; text-decoration: none; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); background-clip: content-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* utility */
+.scroll-y { overflow-y: auto; overflow-x: hidden; }
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity:0; transform: scale(.96); } to { opacity:1; transform:none; } }
+.fade-up { animation: fadeUp .5s cubic-bezier(.16,.84,.44,1) both; }
+.fade-in { animation: fadeIn .4s ease both; }
+
+/* focus */
+:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); border-radius: var(--r-sm); }
