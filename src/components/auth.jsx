@@ -40,7 +40,56 @@ export function AuthScreen({ onEnter }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState("login");
   const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ name: "", email: "pastor.james@example.com", password: "password", role: "Member" });
   const reg = mode === "register";
+  const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  const handleAuth = async () => {
+    if (!formData.email || !formData.password || (reg && !formData.name)) {
+      setError("Please fill in all required fields");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const endpoint = reg ? '/api/auth/register' : '/api/auth/login';
+      const payload = reg
+        ? { name: formData.name, email: formData.email, password: formData.password, role: formData.role }
+        : { email: formData.email, password: formData.password };
+
+      console.log("Attempting auth at:", API + endpoint, "payload:", payload);
+
+      const res = await fetch(API + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      console.log("Auth response:", res.status, data);
+
+      if (!res.ok) {
+        throw new Error(data.message || `Authentication failed: ${res.status}`);
+      }
+
+      if (!data.token) {
+        throw new Error("No token received from server");
+      }
+
+      console.log("Saving token to localStorage:", data.token.substring(0, 50));
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      console.log("Token saved, calling onEnter");
+      onEnter(data.user);
+    } catch (err) {
+      console.error("Auth error:", err);
+      setError(err.message || "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div style={{ height: "100vh", display: "flex", background: "var(--bg)" }}>
       <div className="brand-side" style={{ display: "flex", flex: 1 }}><Brandside /></div>
@@ -57,19 +106,20 @@ export function AuthScreen({ onEnter }) {
           <p className="muted" style={{ fontSize: 14, marginTop: 6, marginBottom: 26 }}>{reg ? "Create your account to get connected." : `Sign in to your ChurchConnect account.`}</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {reg && <Field label={t('auth.name')}><Input placeholder="Your name" defaultValue="" /></Field>}
-            <Field label={t('auth.email')}><Input type="email" placeholder="you@example.com" defaultValue={reg ? "" : "pastor.james@example.com"} /></Field>
+            {error && <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--error-soft, #fee)', color: 'var(--error, #c00)', fontSize: 13 }}>{error}</div>}
+            {reg && <Field label={t('auth.name')}><Input placeholder="Your name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></Field>}
+            <Field label={t('auth.email')}><Input type="email" placeholder="you@example.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></Field>
             <Field label={t('auth.password')}>
               <div style={{ position: "relative" }}>
-                <Input type={show ? "text" : "password"} placeholder="••••••••" defaultValue={reg ? "" : "password"} style={{ paddingRight: 44 }} />
+                <Input type={show ? "text" : "password"} placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} style={{ paddingRight: 44 }} />
                 <button onClick={() => setShow(s => !s)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", color: "var(--text-faint)", display: "grid", padding: 4 }}><Icon.Eye size={18} /></button>
               </div>
             </Field>
             {reg && <Field label={t('auth.selectRole')}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {["Member", "Ministry Leader", "Staff", "Visitor"].map((r, i) => (
-                  <label key={r} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 13px", borderRadius: 10, border: "1px solid var(--border-strong)", fontSize: 13, fontWeight: 500, cursor: "pointer", background: i === 0 ? "var(--primary-soft)" : "var(--surface-2)", color: i === 0 ? "var(--on-primary-soft)" : "var(--text)" }}>
-                    <input type="radio" name="role" defaultChecked={i === 0} style={{ accentColor: "var(--primary)" }} />{r}
+                  <label key={r} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 13px", borderRadius: 10, border: "1px solid var(--border-strong)", fontSize: 13, fontWeight: 500, cursor: "pointer", background: formData.role === r ? "var(--primary-soft)" : "var(--surface-2)", color: formData.role === r ? "var(--on-primary-soft)" : "var(--text)" }}>
+                    <input type="radio" name="role" checked={formData.role === r} onChange={() => setFormData({...formData, role: r})} style={{ accentColor: "var(--primary)" }} />{r}
                   </label>
                 ))}
               </div>
@@ -80,7 +130,7 @@ export function AuthScreen({ onEnter }) {
               <a style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", cursor: "pointer" }}>Forgot password?</a>
             </div>}
 
-            <Button size="lg" onClick={onEnter} style={{ width: "100%", marginTop: 4 }} iconRight={Icon.Arrow}>{reg ? "Create account" : "Sign in"}</Button>
+            <Button size="lg" onClick={handleAuth} disabled={loading} style={{ width: "100%", marginTop: 4 }} iconRight={Icon.Arrow}>{loading ? (reg ? "Creating..." : "Signing in...") : (reg ? "Create account" : "Sign in")}</Button>
 
             <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "4px 0" }}>
               <div style={{ flex: 1, height: 1, background: "var(--border)" }} /><span className="faint" style={{ fontSize: 12 }}>or continue with</span><div style={{ flex: 1, height: 1, background: "var(--border)" }} />
