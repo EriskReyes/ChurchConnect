@@ -65,6 +65,11 @@ function App() {
   const [page, setPage] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(t.sidebar === "icons");
 
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) setAuthed(true);
+  }, []);
+
   useEffect(() => { setCollapsed(t.sidebar === "icons"); }, [t.sidebar]);
 
   useEffect(() => {
@@ -76,10 +81,15 @@ function App() {
 
   const nav = (k) => { setPage(k); document.querySelector(".main-scroll")?.scrollTo({ top: 0 }); };
 
+  const handleLogin = () => {
+    localStorage.setItem("authToken", "test-token-" + Math.random().toString(36).substr(2, 9));
+    setAuthed(true);
+  };
+
   if (!authed) {
     return (
       <div data-theme={theme} data-density={t.density} style={rootStyle}>
-        <AuthScreen onEnter={() => setAuthed(true)} />
+        <AuthScreen onEnter={handleLogin} />
         <Tweaks t={t} setTweak={setTweak} />
       </div>
     );

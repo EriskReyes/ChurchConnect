@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '../components/icons';
 import { Card, Badge, Button, Avatar, Progress, Segmented, Modal, Field, Input, Select, Textarea, SearchInput, Menu, IconButton } from '../components/ui';
 import DB from '../data';
@@ -118,23 +118,84 @@ function EventModal({ event, onClose }) {
   );
 }
 
-function NewEventModal({ open, onClose }) {
+function NewEventModal({ open, onClose, onEventCreated }) {
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("2026-06-14");
+  const [time, setTime] = useState("10:00");
+  const [location, setLocation] = useState("");
+  const [ministry, setMinistry] = useState(DB.ministries[0]?.name || "");
+  const [capacity, setCapacity] = useState("100");
+  const [description, setDescription] = useState("");
+  const [recurring, setRecurring] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async () => {
+    if (!title || !date || !time || !location || !ministry || !capacity) {
+      setError("Please fill all required fields");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("http://localhost:5000/api/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : ""
+        },
+        body: JSON.stringify({
+          title,
+          date,
+          time,
+          location,
+          ministry,
+          capacity: parseInt(capacity),
+          description,
+          recurring,
+          attendees: 0,
+          status: "Upcoming",
+          lead: "Church Admin"
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to create event");
+
+      const newEvent = await response.json();
+      onEventCreated(newEvent);
+
+      setTitle("");
+      setLocation("");
+      setDescription("");
+      setRecurring(false);
+      onClose();
+    } catch (err) {
+      setError(err.message || "Error creating event");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Modal open={open} onClose={onClose} title="Create event" width={560}
-      footer={<><Button variant="outline" onClick={onClose}>Cancel</Button><Button icon={Icon.Check} onClick={onClose}>Create event</Button></>}>
+      footer={<><Button variant="outline" onClick={onClose}>Cancel</Button><Button icon={Icon.Check} onClick={handleSubmit} disabled={loading}>{loading ? "Creating..." : "Create event"}</Button></>}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <Field label="Event title"><Input placeholder="e.g. Sunday Worship Service" /></Field>
+        {error && <div style={{ color: "var(--warn)", fontSize: 13, padding: "8px 12px", background: "var(--warn-soft)", borderRadius: 8 }}>{error}</div>}
+        <Field label="Event title"><Input placeholder="e.g. Sunday Worship Service" value={title} onChange={e => setTitle(e.target.value)} /></Field>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <Field label="Date"><Input type="date" defaultValue="2026-06-14" /></Field>
-          <Field label="Time"><Input type="time" defaultValue="10:00" /></Field>
+          <Field label="Date"><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
+          <Field label="Time"><Input type="time" value={time} onChange={e => setTime(e.target.value)} /></Field>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <Field label="Location"><Input placeholder="Main Sanctuary" /></Field>
-          <Field label="Ministry"><Select options={DB.ministries.map(m => m.name)} /></Field>
+          <Field label="Location"><Input placeholder="Main Sanctuary" value={location} onChange={e => setLocation(e.target.value)} /></Field>
+          <Field label="Ministry"><Select value={ministry} onChange={e => setMinistry(e.target.value)} options={["Worship", "Youth", "Outreach", "Children", "Hospitality", "Discipleship"]} /></Field>
         </div>
-        <Field label="Capacity"><Input type="number" defaultValue="100" /></Field>
-        <Field label="Description"><Textarea placeholder="Share details about this gathering…" /></Field>
-        <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13.5, fontWeight: 500 }}><input type="checkbox" style={{ accentColor: "var(--primary)" }} /> Repeat weekly</label>
+        <Field label="Capacity"><Input type="number" value={capacity} onChange={e => setCapacity(e.target.value)} /></Field>
+        <Field label="Description"><Textarea placeholder="Share details about this gathering…" value={description} onChange={e => setDescription(e.target.value)} /></Field>
+        <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13.5, fontWeight: 500 }}><input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} style={{ accentColor: "var(--primary)" }} /> Repeat weekly</label>
       </div>
     </Modal>
   );
@@ -147,8 +208,40 @@ export default function Events({ role }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(null);
   const [creating, setCreating] = useState(false);
-  const ministries = ["All", ...new Set(DB.events.map(e => e.ministry))];
-  let list = DB.events.filter(e => (filter === "All" || e.ministry === filter) && e.title.toLowerCase().includes(q.toLowerCase()));
+  const [events, setEvents] = useState(DB.events);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("http://localhost:5000/api/events", {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data);
+      } else {
+        setEvents(DB.events);
+      }
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      setEvents(DB.events);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEventCreated = (newEvent) => {
+    setEvents([...events, newEvent]);
+  };
+
+  const ministries = ["All", ...new Set(events.map(e => e.ministry))];
+  let list = events.filter(e => (filter === "All" || e.ministry === filter) && e.title.toLowerCase().includes(q.toLowerCase()));
 
   const canEdit = role !== "Member";
   return (
@@ -174,7 +267,7 @@ export default function Events({ role }) {
         : <div className="fade-up"><CalendarView onOpen={setOpen} /></div>}
 
       <EventModal event={open} onClose={() => setOpen(null)} />
-      <NewEventModal open={creating} onClose={() => setCreating(false)} />
+      <NewEventModal open={creating} onClose={() => setCreating(false)} onEventCreated={handleEventCreated} />
     </div>
   );
 }
