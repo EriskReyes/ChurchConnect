@@ -203,4 +203,17 @@ router.post('/church-login', async (req, res) => {
   }
 });
 
+// Delete account
+router.delete('/delete-account', protect, async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Account deletion failed: ' + error.message });
+  }
+});
+
 export default router;

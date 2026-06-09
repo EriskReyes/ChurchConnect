@@ -9,18 +9,43 @@ export default function Settings({ role }) {
   const { t } = useTranslation();
   const { language, setLanguage } = useContext(LanguageContext);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 600);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 600);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      const [firstName, ...lastNameParts] = (userData.name || "").split(" ");
+      const lastName = lastNameParts.join(" ");
+      setProfileData({
+        firstName: firstName || "",
+        lastName: lastName || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        bio: userData.bio || ""
+      });
+      setTempProfileData({
+        firstName: firstName || "",
+        lastName: lastName || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        bio: userData.bio || ""
+      });
+    }
+  }, []);
+
   const [profileImage, setProfileImage] = useState(null);
   const fileInputRef = useRef(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingChurch, setEditingChurch] = useState(false);
-  const [profileData, setProfileData] = useState({ firstName: "James", lastName: "Whitfield", email: "pastor.james@example.com", phone: "(503) 555-0100", bio: "Lead Pastor at Grace Community Church. Husband, father, and lifelong learner." });
-  const [churchData, setChurchData] = useState({ name: "Grace Community Church", founded: "2010", address: "123 Main St, Portland, OR 97201", city: "Portland", description: "A welcoming community dedicated to grace, growth, and generosity." });
+  const [profileData, setProfileData] = useState({ firstName: "", lastName: "", email: "", phone: "", bio: "" });
+  const [churchData, setChurchData] = useState({ name: "", founded: "", address: "", city: "", description: "" });
   const [tempProfileData, setTempProfileData] = useState(profileData);
   const [tempChurchData, setTempChurchData] = useState(churchData);
 
@@ -124,6 +149,32 @@ export default function Settings({ role }) {
                 </div>
               </>
             )}
+          </Card>
+
+          <Card style={{ borderColor: "var(--danger)", background: "var(--danger-soft)" }}>
+            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4, color: "var(--danger)" }}>Danger zone</h3>
+            <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>Permanently delete your ChurchConnect account. This action cannot be undone.</p>
+            <Button variant="danger" onClick={() => {
+              if (window.confirm("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.")) {
+                setLoading(true);
+                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/delete-account`, {
+                  method: 'DELETE',
+                  headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) {
+                      localStorage.removeItem('authToken');
+                      localStorage.removeItem('user');
+                      window.location.href = '/';
+                    } else {
+                      alert('Error deleting account: ' + data.message);
+                    }
+                  })
+                  .catch(err => alert('Error: ' + err.message))
+                  .finally(() => setLoading(false));
+              }
+            }} icon={Icon.Trash}>Delete account</Button>
           </Card>
         </div>
       )}
