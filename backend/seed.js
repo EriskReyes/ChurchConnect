@@ -2,7 +2,6 @@
 // Llena la base de datos de ChurchConnect con datos de ejemplo realistas
 
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
 import User from './models/User.js';
@@ -29,22 +28,23 @@ const connectDB = async () => {
 };
 
 const seedUsers = async () => {
-    const password = await bcrypt.hash('password123', 10); // Hashea la contraseña para todos
     const users = [
-        { name: 'Pastor James Whitfield', email: 'pastor@gracecc.org', password, role: 'Admin', phone: '+41 79 123 45 67', active: true },
-        { name: 'Sarah Mitchell', email: 'sarah@gracecc.org', password, role: 'Ministry Leader', phone: '+41 79 234 56 78', active: true },
-        { name: 'Marcus Bell', email: 'marcus@gracecc.org', password, role: 'Member', phone: '+41 79 345 67 89', active: true },
-        { name: 'Eleanor Hughes', email: 'eleanor@gracecc.org', password, role: 'Member', phone: '+41 79 456 78 90', active: true },
-        { name: 'David Kim', email: 'david@gracecc.org', password, role: 'Treasurer', phone: '+41 79 567 89 01', active: true }
+        { name: 'Pastor James Whitfield', email: 'pastor@gracecc.org', password: 'password123', role: 'Admin', phone: '+41 79 123 45 67' },
+        { name: 'Sarah Mitchell', email: 'sarah@gracecc.org', password: 'password123', role: 'Ministry Leader', phone: '+41 79 234 56 78' },
+        { name: 'Marcus Bell', email: 'marcus@gracecc.org', password: 'password123', role: 'Member', phone: '+41 79 345 67 89' },
+        { name: 'Eleanor Hughes', email: 'eleanor@gracecc.org', password: 'password123', role: 'Member', phone: '+41 79 456 78 90' },
+        { name: 'David Kim', email: 'david@gracecc.org', password: 'password123', role: 'Treasurer', phone: '+41 79 567 89 01' }
     ];
-    await User.deleteMany({});
-    const created = await User.insertMany(users);
-    console.log('👤 Usuarios creados:', created.length);
+    await User.deleteMany({}); // Limpia usuarios existentes
+    for (const userData of users) {
+        await User.create(userData); // create() activa el pre save hook que hashea la contraseña
+    }
+    console.log('👤 Usuarios creados: 5');
 };
 
 const seedChurch = async () => {
     const churchData = {
-        name: 'Grace Community Church', // Nombre de la iglesia
+        name: 'Grace Community Church',
         tagline: 'Faith · Community · Purpose',
         address: 'Bahnhofstrasse 42, 8001 Zürich',
         phone: '+41 44 123 45 67',
@@ -186,7 +186,6 @@ const seedPrayerRequests = async () => {
     console.log('🙏 Peticiones de oración creadas:', created.length);
 };
 
-// Funcion principal — ejecuta todos los seeds en orden
 const runSeed = async () => {
     await connectDB();
     console.log('\n🌱 Iniciando seed de ChurchConnect...\n');
