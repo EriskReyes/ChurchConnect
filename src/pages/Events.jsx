@@ -8,13 +8,14 @@ const STATUS_TONE = { Upcoming: "primary", Planning: "warn", Past: "neutral" };
 const fmtDate = d => new Date(d + "T00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
 function EventRow({ e, onOpen }) {
-  const day = new Date(e.date + "T00:00");
+  const day = e.date ? new Date(e.date + "T00:00") : new Date();
+  const dateNum = !isNaN(day.getDate()) ? day.getDate() : "?";
   return (
     <Card hover onClick={() => onOpen(e)} style={{ padding: 0, overflow: "hidden" }}>
       <div style={{ display: "flex", alignItems: "stretch" }}>
         <div style={{ width: 84, flexShrink: 0, background: "var(--primary-soft)", color: "var(--on-primary-soft)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "14px 0" }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase" }}>{day.toLocaleDateString("en-US", { month: "short" })}</div>
-          <div style={{ fontSize: 28, fontWeight: 700, fontFamily: "var(--font-head)", lineHeight: 1 }}>{day.getDate()}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, fontFamily: "var(--font-head)", lineHeight: 1 }}>{dateNum}</div>
           <div style={{ fontSize: 11, opacity: .8, marginTop: 2 }}>{day.toLocaleDateString("en-US", { weekday: "short" })}</div>
         </div>
         <div style={{ flex: 1, minWidth: 0, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -85,11 +86,35 @@ function CalendarView({ onOpen }) {
   );
 }
 
-function EventModal({ event, onClose }) {
+function EventModal({ event, onClose, onDelete, onEdit }) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm("¿Estás seguro de que quieres borrar este evento?")) return;
+
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://localhost:5000/api/events/${event.id || event._id}`, {
+        method: "DELETE",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      });
+
+      if (response.ok) {
+        onDelete();
+        onClose();
+      }
+    } catch (err) {
+      alert("Error al borrar evento: " + err.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (!event) return null;
   return (
     <Modal open={!!event} onClose={onClose} title={event.title} width={560}
-      footer={<><Button variant="outline" onClick={onClose}>Close</Button><Button icon={Icon.Check}>Register attendees</Button></>}>
+      footer={<><Button variant="outline" onClick={onClose}>Close</Button><Button icon={Icon.Pencil} onClick={onEdit}>Edit</Button><Button icon={Icon.Trash} variant="danger" onClick={handleDelete} disabled={deleting}>{deleting ? "Borrando..." : "Delete"}</Button></>}>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
         <Badge tone={STATUS_TONE[event.status]} dot>{event.status}</Badge>
         <Badge tone="primary">{event.ministry}</Badge>
@@ -201,6 +226,81 @@ function NewEventModal({ open, onClose, onEventCreated }) {
   );
 }
 
+function EditEventModal({ open, onClose, onEventUpdated, event }) {
+  const [title, setTitle] = useState(event?.title || "");
+  const [date, setDate] = useState(event?.date || "");
+  const [time, setTime] = useState(event?.time || "");
+  const [location, setLocation] = useState(event?.location || "");
+  const [ministry, setMinistry] = useState(event?.ministry || "");
+  const [capacity, setCapacity] = useState(event?.capacity?.toString() || "");
+  const [description, setDescription] = useState(event?.description || "");
+  const [recurring, setRecurring] = useState(event?.recurring || false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async () => {
+    if (!title || !date || !time || !location || !ministry || !capacity) {
+      setError("Please fill all required fields");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://localhost:5000/api/events/${event.id || event._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : ""
+        },
+        body: JSON.stringify({
+          title,
+          date,
+          time,
+          location,
+          ministry,
+          capacity: parseInt(capacity),
+          description,
+          recurring
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to update event");
+
+      const updatedEvent = await response.json();
+      onEventUpdated(updatedEvent);
+      onClose();
+    } catch (err) {
+      setError(err.message || "Error updating event");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Edit event" width={560}
+      footer={<><Button variant="outline" onClick={onClose}>Cancel</Button><Button icon={Icon.Check} onClick={handleSubmit} disabled={loading}>{loading ? "Saving..." : "Save"}</Button></>}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {error && <div style={{ color: "var(--warn)", fontSize: 13, padding: "8px 12px", background: "var(--warn-soft)", borderRadius: 8 }}>{error}</div>}
+        <Field label="Event title"><Input placeholder="e.g. Sunday Worship Service" value={title} onChange={e => setTitle(e.target.value)} /></Field>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <Field label="Date"><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
+          <Field label="Time"><Input type="time" value={time} onChange={e => setTime(e.target.value)} /></Field>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <Field label="Location"><Input placeholder="Main Sanctuary" value={location} onChange={e => setLocation(e.target.value)} /></Field>
+          <Field label="Ministry"><Select value={ministry} onChange={e => setMinistry(e.target.value)} options={["Worship", "Youth", "Outreach", "Children", "Hospitality", "Discipleship"]} /></Field>
+        </div>
+        <Field label="Capacity"><Input type="number" value={capacity} onChange={e => setCapacity(e.target.value)} /></Field>
+        <Field label="Description"><Textarea placeholder="Share details about this gathering…" value={description} onChange={e => setDescription(e.target.value)} /></Field>
+        <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13.5, fontWeight: 500 }}><input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} style={{ accentColor: "var(--primary)" }} /> Repeat weekly</label>
+      </div>
+    </Modal>
+  );
+}
+
 export default function Events({ role }) {
   const { t } = useTranslation();
   const [view, setView] = useState("list");
@@ -208,6 +308,7 @@ export default function Events({ role }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [events, setEvents] = useState(DB.events);
   const [loading, setLoading] = useState(false);
 
@@ -240,6 +341,17 @@ export default function Events({ role }) {
     setEvents([...events, newEvent]);
   };
 
+  const handleEventUpdated = (updatedEvent) => {
+    setEvents(events.map(e => e.id === updatedEvent.id || e._id === updatedEvent._id ? updatedEvent : e));
+    setOpen(updatedEvent);
+    setEditing(false);
+  };
+
+  const handleEventDeleted = () => {
+    setOpen(null);
+    fetchEvents();
+  };
+
   const ministries = ["All", ...new Set(events.map(e => e.ministry))];
   let list = events.filter(e => (filter === "All" || e.ministry === filter) && e.title.toLowerCase().includes(q.toLowerCase()));
 
@@ -263,11 +375,12 @@ export default function Events({ role }) {
       )}
 
       {view === "list"
-        ? <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>{list.map(e => <EventRow key={e.id} e={e} onOpen={setOpen} />)}</div>
+        ? <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>{list.map((e, i) => <EventRow key={e.id || e._id || i} e={e} onOpen={setOpen} />)}</div>
         : <div className="fade-up"><CalendarView onOpen={setOpen} /></div>}
 
-      <EventModal event={open} onClose={() => setOpen(null)} />
+      <EventModal event={open} onClose={() => setOpen(null)} onDelete={handleEventDeleted} onEdit={() => setEditing(true)} />
       <NewEventModal open={creating} onClose={() => setCreating(false)} onEventCreated={handleEventCreated} />
+      <EditEventModal open={editing} onClose={() => setEditing(false)} onEventUpdated={handleEventUpdated} event={open} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '../components/icons';
 import { Card, Badge, Button, Avatar, Stat, Progress, Modal, Field, Input, Select, SearchInput } from '../components/ui';
 import { BarChart } from '../components/charts';
@@ -7,8 +7,105 @@ import { useTranslation } from '../hooks/useTranslation';
 
 export default function Donations({ role }) {
   const { t } = useTranslation();
-  const [q, setQ] = useState("");
+  const [donations, setDonations] = useState(DB.donations);
   const [recording, setRecording] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [amount, setAmount] = useState("");
+  const [donor, setDonor] = useState("Anonymous");
+  const [fund, setFund] = useState("General Tithe");
+  const [method, setMethod] = useState("Card");
+  const [recurring, setRecurring] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchDonations();
+  }, []);
+
+  const fetchDonations = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("http://localhost:5000/api/donations", {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      });
+      if (response.ok) setDonations(await response.json());
+    } catch (err) {
+      console.error("Error fetching donations:", err);
+    }
+  };
+
+  const handleSaveDonation = async () => {
+    if (!amount) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const payload = {
+        donor,
+        fund,
+        amount: parseFloat(amount),
+        method,
+        recurring,
+        date: new Date().toISOString().split('T')[0]
+      };
+
+      if (editing && selected) {
+        const response = await fetch(`http://localhost:5000/api/donations/${selected.id || selected._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : ""
+          },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          const updated = await response.json();
+          setDonations(donations.map(d => d.id === updated.id || d._id === updated._id ? updated : d));
+          setEditing(false);
+          setSelected(null);
+        }
+      } else {
+        const response = await fetch("http://localhost:5000/api/donations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : ""
+          },
+          body: JSON.stringify(payload)
+        });
+        if (response.ok) {
+          const newDonation = await response.json();
+          setDonations([...donations, newDonation]);
+        }
+      }
+
+      setAmount("");
+      setDonor("Anonymous");
+      setFund("General Tithe");
+      setMethod("Card");
+      setRecurring(false);
+      setRecording(false);
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDonation = async (donation) => {
+    if (!confirm("Delete this donation?")) return;
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://localhost:5000/api/donations/${donation.id || donation._id}`, {
+        method: "DELETE",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      });
+      if (response.ok) {
+        setDonations(donations.filter(d => d.id !== donation.id && d._id !== donation._id));
+      }
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  };
 
   const fmt = n => "$" + n.toLocaleString();
   const fmtK = n => n >= 1000 ? "$" + (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k" : "$" + n;
@@ -33,7 +130,7 @@ export default function Donations({ role }) {
       <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h3 style={{ fontSize: 16, fontWeight: 700 }}>Funds</h3>
-          {role !== "Member" && <Button size="sm" icon={Icon.Plus} onClick={() => setRecording(true)}>Record gift</Button>}
+          {role !== "Member" && <Button size="sm" icon={Icon.Plus} onClick={() => { setRecording(true); setEditing(false); }}>Record gift</Button>}
         </div>
         {DB.funds.map(f => (
           <Card key={f.name}>
@@ -46,20 +143,50 @@ export default function Donations({ role }) {
         ))}
       </div>
 
-      <Modal open={recording} onClose={() => setRecording(false)} title="Record a gift" width={500}
-        footer={<><Button variant="outline" onClick={() => setRecording(false)}>Cancel</Button><Button icon={Icon.Check} onClick={() => setRecording(false)}>Record gift</Button></>}>
+      <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700 }}>Recent Donations</h3>
+        {donations.length === 0 ? (
+          <Card style={{ textAlign: "center", padding: 40 }}>
+            <p className="muted">No donations recorded yet</p>
+          </Card>
+        ) : (
+          donations.slice(0, 10).map(d => (
+            <Card key={d.id || d._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                <Avatar name={d.donor || "Anonymous"} size={40} />
+                <div>
+                  <h4 style={{ fontWeight: 600 }}>{d.donor || "Anonymous"}</h4>
+                  <p className="muted" style={{ fontSize: 12, marginTop: 2 }}>{d.fund} · {d.method} · {d.date}</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>${d.amount}</div>
+                {d.recurring && <Badge tone="sage">Recurring</Badge>}
+                {role !== "Member" && <>
+                  <Button size="sm" icon={Icon.Pencil} variant="ghost" onClick={() => { setSelected(d); setEditing(true); setAmount(d.amount.toString()); setDonor(d.donor); setFund(d.fund); setMethod(d.method); setRecurring(d.recurring); setRecording(true); }}>Edit</Button>
+                  <Button size="sm" icon={Icon.Trash} variant="ghost" onClick={() => handleDeleteDonation(d)}>Delete</Button>
+                </>}
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
+
+      <Modal open={recording} onClose={() => { setRecording(false); setEditing(false); }} title={editing ? "Edit Donation" : "Record a gift"} width={500}
+        footer={<><Button variant="outline" onClick={() => { setRecording(false); setEditing(false); }}>Cancel</Button><Button icon={Icon.Check} onClick={handleSaveDonation} disabled={loading}>{loading ? "Saving..." : editing ? "Update" : "Record"}</Button></>}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="Amount">
+          <Field label="Amount *">
             <div style={{ position: "relative" }}>
               <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontWeight: 700, color: "var(--text-muted)" }}>$</span>
-              <Input type="number" placeholder="0.00" style={{ paddingLeft: 28, fontSize: 18, fontWeight: 700 }} />
+              <Input type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} style={{ paddingLeft: 28, fontSize: 18, fontWeight: 700 }} />
             </div>
           </Field>
-          <Field label="Donor"><Select options={["Anonymous", ...DB.members.map(m => m.name)]} /></Field>
+          <Field label="Donor"><Select value={donor} onChange={e => setDonor(e.target.value)} options={["Anonymous", ...DB.members.map(m => m.name)]} /></Field>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <Field label="Fund"><Select options={DB.funds.map(f => f.name)} /></Field>
-            <Field label="Method"><Select options={["Card", "Bank", "Cash", "Check"]} /></Field>
+            <Field label="Fund"><Select value={fund} onChange={e => setFund(e.target.value)} options={DB.funds.map(f => f.name)} /></Field>
+            <Field label="Method"><Select value={method} onChange={e => setMethod(e.target.value)} options={["Card", "Bank", "Cash", "Check"]} /></Field>
           </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13.5, fontWeight: 500 }}><input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} style={{ accentColor: "var(--primary)" }} /> Recurring donation</label>
         </div>
       </Modal>
     </div>

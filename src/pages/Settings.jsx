@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef } from 'react';
 import { Icon } from '../components/icons';
 import { Card, Button, Avatar, Field, Input, Textarea } from '../components/ui';
 import { useTranslation } from '../hooks/useTranslation';
@@ -8,6 +8,24 @@ export default function Settings({ role }) {
   const [tab, setTab] = useState("profile");
   const { t } = useTranslation();
   const { language, setLanguage } = useContext(LanguageContext);
+  const [profileImage, setProfileImage] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 4 * 1024 * 1024) {
+      alert("La imagen es muy grande. Máximo 4 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setProfileImage(event.target?.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const tabs = ["profile", "church", "preferences", "languages"];
   const tabLabels = {
@@ -40,8 +58,12 @@ export default function Settings({ role }) {
             <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Your profile</h3>
             <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>This information is visible to other church members.</p>
             <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 24 }}>
-              <Avatar name="James Whitfield" size={76} ring />
-              <div><Button variant="outline" icon={Icon.Image}>Change photo</Button><div className="faint" style={{ fontSize: 12, marginTop: 8 }}>JPG or PNG, max 4 MB</div></div>
+              <Avatar name="James Whitfield" size={76} ring src={profileImage} />
+              <div>
+                <Button variant="outline" icon={Icon.Image} onClick={() => fileInputRef.current?.click()}>Change photo</Button>
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handlePhotoUpload} style={{ display: "none" }} />
+                <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>JPG or PNG, max 4 MB</div>
+              </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <Field label="First name"><Input defaultValue="James" /></Field>

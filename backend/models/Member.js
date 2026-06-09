@@ -6,7 +6,7 @@ const memberSchema = new mongoose.Schema({
   phone: String,
   role: {
     type: String,
-    enum: ['Pastor', 'Member', 'Ministry Leader', 'Treasurer'],
+    enum: ['Pastor', 'Member', 'Ministry Leader', 'Treasurer', 'Staff', 'Admin'],
     default: 'Member'
   },
   ministry: String,

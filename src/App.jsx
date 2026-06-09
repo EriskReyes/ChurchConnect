@@ -12,6 +12,10 @@ import Donations from './pages/Donations';
 import Sermons from './pages/Sermons';
 import Settings from './pages/Settings';
 import Connect from './pages/Connect';
+import ChatPage from './pages/ChatPage';
+import Gallery from './pages/Gallery';
+import Flyers from './pages/Flyers';
+import Documents from './pages/Documents';
 
 const TWEAK_DEFAULTS = {
   "primaryColor": "#3B5BA5",
@@ -29,18 +33,18 @@ const PAGES = {
   donations: Donations,
   sermons: Sermons,
   settings: Settings,
-  chat: Connect,
+  chat: ChatPage,
+  gallery: Gallery,
+  flyers: Flyers,
+  documents: Documents,
   community: Connect,
   prayer: Connect,
   ministries: Connect,
-  documents: Connect,
 };
 
 function Placeholder({ page, onNav }) {
   const meta = {
     staff: { icon: Icon.Cross, title: "Staff & Leadership", text: "Pastoral and administrative team directory with roles, contact cards, and on-call schedules." },
-    flyers: { icon: Icon.Megaphone, title: "Flyers", text: "Design and share event flyers and announcements across the congregation." },
-    gallery: { icon: Icon.Image, title: "Gallery", text: "Browse photos from services, retreats, baptisms, and community life." },
     reports: { icon: Icon.Chart, title: "Reports", text: "Deep analytics across attendance, giving, growth, and ministry health." },
   }[page] || { icon: Icon.Sparkle, title: "Coming soon", text: "This section is part of the full ChurchConnect build." };
   return (
