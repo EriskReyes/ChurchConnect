@@ -13,6 +13,9 @@ import Sermons from './pages/Sermons';
 import Settings from './pages/Settings';
 import Connect from './pages/Connect';
 import Reports from './pages/Reports';
+import ChatPage from './pages/ChatPage';
+import Gallery from './pages/Gallery';
+import Flyers from './pages/Flyers';
 
 const TWEAK_DEFAULTS = {
   "primaryColor": "#3B5BA5",
@@ -30,11 +33,13 @@ const PAGES = {
   donations: Donations,
   sermons: Sermons,
   settings: Settings,
-  chat: Connect,
+  chat: ChatPage,
   community: Connect,
   prayer: Connect,
   ministries: Connect,
   documents: Connect,
+  gallery: Gallery,
+  flyers: Flyers,
   reports: Reports,
 };
 
@@ -62,7 +67,7 @@ function Placeholder({ page, onNav }) {
 function App() {
   useTranslation(); // Forces re-render when language changes
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [authed, setAuthed] = useState(!!localStorage.getItem('token'));
+  const [authed, setAuthed] = useState(!!localStorage.getItem('authToken'));
   const [role, setRole] = useState(() => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user).role : "Admin";
@@ -96,7 +101,7 @@ function App() {
   const PageComp = PAGES[page];
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     setAuthed(false);
   };
