@@ -5,7 +5,7 @@ const sermonSchema = new mongoose.Schema({
   speaker: String,
   speakerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
   series: String,
-  date: { type: Date, default: Date.now },
+  date: { type: Date, required: true },
   duration: String,
   scripture: String,
   description: String,

@@ -12,10 +12,7 @@ import Donations from './pages/Donations';
 import Sermons from './pages/Sermons';
 import Settings from './pages/Settings';
 import Connect from './pages/Connect';
-import ChatPage from './pages/ChatPage';
-import Gallery from './pages/Gallery';
-import Flyers from './pages/Flyers';
-import Documents from './pages/Documents';
+import Reports from './pages/Reports';
 
 const TWEAK_DEFAULTS = {
   "primaryColor": "#3B5BA5",
@@ -33,18 +30,19 @@ const PAGES = {
   donations: Donations,
   sermons: Sermons,
   settings: Settings,
-  chat: ChatPage,
-  gallery: Gallery,
-  flyers: Flyers,
-  documents: Documents,
+  chat: Connect,
   community: Connect,
   prayer: Connect,
   ministries: Connect,
+  documents: Connect,
+  reports: Reports,
 };
 
 function Placeholder({ page, onNav }) {
   const meta = {
     staff: { icon: Icon.Cross, title: "Staff & Leadership", text: "Pastoral and administrative team directory with roles, contact cards, and on-call schedules." },
+    flyers: { icon: Icon.Megaphone, title: "Flyers", text: "Design and share event flyers and announcements across the congregation." },
+    gallery: { icon: Icon.Image, title: "Gallery", text: "Browse photos from services, retreats, baptisms, and community life." },
     reports: { icon: Icon.Chart, title: "Reports", text: "Deep analytics across attendance, giving, growth, and ministry health." },
   }[page] || { icon: Icon.Sparkle, title: "Coming soon", text: "This section is part of the full ChurchConnect build." };
   return (
@@ -64,15 +62,13 @@ function Placeholder({ page, onNav }) {
 function App() {
   useTranslation(); // Forces re-render when language changes
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [authed, setAuthed] = useState(false);
-  const [role, setRole] = useState("Admin");
+  const [authed, setAuthed] = useState(!!localStorage.getItem('token'));
+  const [role, setRole] = useState(() => {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user).role : "Admin";
+  });
   const [page, setPage] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(t.sidebar === "icons");
-
-  useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) setAuthed(true);
-  }, []);
 
   useEffect(() => { setCollapsed(t.sidebar === "icons"); }, [t.sidebar]);
 
@@ -85,15 +81,13 @@ function App() {
 
   const nav = (k) => { setPage(k); document.querySelector(".main-scroll")?.scrollTo({ top: 0 }); };
 
-  const handleLogin = () => {
-    localStorage.setItem("authToken", "test-token-" + Math.random().toString(36).substr(2, 9));
-    setAuthed(true);
-  };
-
   if (!authed) {
     return (
       <div data-theme={theme} data-density={t.density} style={rootStyle}>
-        <AuthScreen onEnter={handleLogin} />
+        <AuthScreen onEnter={(user) => {
+          setAuthed(true);
+          setRole(user.role || "Member");
+        }} />
         <Tweaks t={t} setTweak={setTweak} />
       </div>
     );
@@ -101,11 +95,17 @@ function App() {
 
   const PageComp = PAGES[page];
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setAuthed(false);
+  };
+
   return (
     <div className="app-shell" data-theme={theme} data-density={t.density} style={rootStyle}>
-      <Sidebar active={page} onNav={nav} collapsed={collapsed} role={role} onLogout={() => setAuthed(false)} />
+      <Sidebar active={page} onNav={nav} collapsed={collapsed} role={role} onLogout={handleLogout} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", height: "100%" }}>
-        <Topbar page={page} role={role} onRole={setRole} onToggleSidebar={() => setCollapsed(c => !c)} dark={t.dark} onToggleDark={() => setTweak("dark", !t.dark)} onLogout={() => setAuthed(false)} />
+        <Topbar page={page} role={role} onRole={setRole} onToggleSidebar={() => setCollapsed(c => !c)} dark={t.dark} onToggleDark={() => setTweak("dark", !t.dark)} onLogout={handleLogout} />
         <main className="main-scroll scroll-y" style={{ flex: 1, padding: "26px 28px 60px" }}>
           <div style={{ maxWidth: 1320, margin: "0 auto" }} key={page}>
             {PageComp ? <PageComp role={role} onNav={nav} /> : <Placeholder page={page} onNav={nav} />}
