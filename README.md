@@ -209,6 +209,27 @@ Beiträge sind willkommen. Bitte:
 
 ## 📝 Lizenz
 
+## 🚀 Deployment
+
+ChurchConnect läuft in der Produktion auf folgenden Plattformen:
+
+### Frontend → Vercel
+- **URL:** https://church-connect-xi.vercel.app
+- **Framework:** Vite (React)
+- **Auto-Deploy:** Bei jedem Push auf `main`
+
+### Backend → Render
+- **URL:** https://churchconnect-28f7.onrender.com
+- **Laufzeit:** Node.js + Express
+- **Datenbank:** MongoDB Atlas (Cloud)
+- **Auto-Deploy:** Bei jedem Push auf `main`
+
+> ⚠️ **Hinweis:** Der kostenlose Render-Plan schaltet den Server nach 15 Minuten Inaktivität ab. Die erste Anfrage kann bis zu 50 Sekunden dauern, bis der Server wieder "aufwacht".
+
+### Umgebungsvariablen in der Produktion
+
+**Vercel (Frontend):**
+
 MIT-Lizenz. Siehe `LICENSE` für Details.
 
 ## 👨‍💻 Autor
