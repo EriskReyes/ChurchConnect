@@ -141,7 +141,7 @@ const PAGE_TITLES = {
 export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark, onLogout, isMobile }) {
   const { t } = useTranslation();
   const [title, sub] = PAGE_TITLES[page] || ["", ""];
-  const rc = ROLES[role].color;
+  const rc = ROLES[role]?.color || '#3B5BA5';
   const [showNotifications, setShowNotifications] = useState(false);
   const [userName, setUserName] = useState("User");
 

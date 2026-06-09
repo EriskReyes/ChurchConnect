@@ -86,11 +86,13 @@ function Ministries({ role, onMinistrySelect }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--gap)" }}>
       <div className="fade-up" style={{ display: "flex", justifyContent: "flex-end" }}>{canAdd && <Button icon={Icon.Plus} onClick={() => setCreating(true)}>New ministry</Button>}</div>
       <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: "var(--gap)" }}>
-        {ministries.map(m => (
+        {ministries.map(m => {
+          const ministryColor = m.color || '#3B5BA5';
+          return (
           <Card key={m.id || m._id} hover pad={false} style={{ overflow: "hidden", cursor: "pointer" }} onClick={() => setSelectedMinistry(m)}>
-            <div style={{ height: 8, background: m.color }} />
+            <div style={{ height: 8, background: ministryColor }} />
             <div style={{ padding: "var(--pad-card)" }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: "color-mix(in srgb," + m.color + " 14%, var(--surface))", color: m.color, display: "grid", placeItems: "center" }}><Icon.Hands size={24} /></div>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: "color-mix(in srgb," + ministryColor + " 14%, var(--surface))", color: ministryColor, display: "grid", placeItems: "center" }}><Icon.Hands size={24} /></div>
               <h3 style={{ fontSize: 17, fontWeight: 700, marginTop: 16 }}>{m.name}</h3>
               <p className="muted" style={{ fontSize: 13, marginTop: 6, lineHeight: 1.5, minHeight: 38 }}>{m.desc}</p>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
@@ -103,7 +105,8 @@ function Ministries({ role, onMinistrySelect }) {
               </div>
             </div>
           </Card>
-        ))}
+          );
+        })}
       </div>
       {selectedMinistry && (
         <>
