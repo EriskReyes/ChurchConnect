@@ -123,8 +123,13 @@ function App() {
 
   return (
     <div className="app-shell" data-theme={theme} data-density={t.density} style={rootStyle}>
-      <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} className={isMobile && sidebarOpen ? "open" : ""} />
-      {isMobile && <div className={`sidebar-backdrop ${sidebarOpen ? "active" : ""}`} onClick={() => setSidebarOpen(false)} />}
+      {!isMobile && <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} />}
+      {isMobile && sidebarOpen && (
+        <>
+          <div className="sidebar-backdrop active" onClick={() => setSidebarOpen(false)} />
+          <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} className="mobile-open" />
+        </>
+      )}
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", height: "100%" }}>
         <Topbar page={page} role={role} onRole={setRole} onToggleSidebar={isMobile ? () => setSidebarOpen(s => !s) : () => setCollapsed(c => !c)} dark={t.dark} onToggleDark={() => setTweak("dark", !t.dark)} onLogout={handleLogout} isMobile={isMobile} />
         <main className="main-scroll scroll-y" style={{ flex: 1, padding: "26px 28px 60px" }}>

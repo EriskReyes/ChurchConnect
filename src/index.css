@@ -165,28 +165,26 @@ code {
     height: 100% !important;
     z-index: 40 !important;
     box-shadow: var(--shadow);
-    transform: translateX(-100%);
-    transition: transform 0.28s cubic-bezier(.16,.84,.44,1);
     border-right: 1px solid var(--border);
   }
 
-  .app-shell > aside.open {
-    transform: translateX(0);
+  .app-shell > aside.mobile-open {
+    display: block !important;
   }
 
-  .app-shell .sidebar-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 35;
-    transition: opacity 0.28s;
+  .sidebar-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: 35 !important;
+    transition: opacity 0.28s !important;
   }
 
-  .app-shell .sidebar-backdrop.active {
-    opacity: 1;
-    pointer-events: auto;
+  .sidebar-backdrop.active {
+    display: block !important;
+    opacity: 1 !important;
   }
 }
 
