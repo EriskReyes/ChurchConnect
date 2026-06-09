@@ -42,8 +42,7 @@ export function AuthScreen({ onEnter }) {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({ name: "", email: "pastor.james@example.com", password: "password", role: "Member" });
-  const reg = mode === "register";
+  const [formData, setFormData] = useState({ name: "", email: "pastor@gracecc.org", password: "password123", role: "Member" });  const reg = mode === "register";
   const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const handleAuth = async () => {
@@ -79,7 +78,7 @@ export function AuthScreen({ onEnter }) {
       }
 
       console.log("Saving token to localStorage:", data.token.substring(0, 50));
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('authToken', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       console.log("Token saved, calling onEnter");
       onEnter(data.user);
