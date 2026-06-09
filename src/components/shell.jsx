@@ -155,9 +155,9 @@ export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark
     <header style={{ height: 70, flexShrink: 0, display: "flex", alignItems: "center", gap: 16, padding: "0 28px", borderBottom: "1px solid var(--border)", background: "color-mix(in srgb, var(--surface) 70%, transparent)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 15 }}>
       {isMobile && <IconButton icon={Icon.Menu} onClick={onToggleSidebar} title="Menu" />}
       {!isMobile && <IconButton icon={Icon.Filter} onClick={onToggleSidebar} title={t('topbar.search')} />}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h1 style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</h1>
-        <div className="muted" style={{ fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+        <h1 style={{ fontSize: isMobile ? 15 : 19, fontWeight: 700, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", margin: 0 }}>{title}</h1>
+        <div className="muted" style={{ fontSize: isMobile ? 11 : 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

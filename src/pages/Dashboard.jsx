@@ -24,9 +24,9 @@ export default function Dashboard({ role, onNav }) {
               <h2 style={{ fontSize: 27, fontWeight: 700, color: "#fff", marginTop: 14, letterSpacing: "-0.02em" }}>{t('dashboard.goodMorning')}, Pastor James.</h2>
               <p style={{ fontSize: 15, opacity: .92, marginTop: 6, lineHeight: 1.55 }}>"{t('dashboard.quote')}" — {t('dashboard.communityThriving')}</p>
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              <Button variant="soft" icon={Icon.Plus} style={{ background: "rgba(255,255,255,.18)", color: "#fff", border: "1px solid rgba(255,255,255,.25)" }}>{t('dashboard.newEvent')}</Button>
-              <Button style={{ background: "#fff", color: "var(--primary)" }} icon={Icon.Mic}>{t('dashboard.uploadSermon')}</Button>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Button variant="soft" icon={Icon.Plus} style={{ background: "rgba(255,255,255,.18)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", minWidth: "fit-content" }}>{t('dashboard.newEvent')}</Button>
+              <Button style={{ background: "#fff", color: "var(--primary)", minWidth: "fit-content" }} icon={Icon.Mic}>{t('dashboard.uploadSermon')}</Button>
             </div>
           </div>
         </Card>
