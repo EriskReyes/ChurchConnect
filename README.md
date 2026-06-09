@@ -215,6 +215,9 @@ ChurchConnect läuft in der Produktion auf folgenden Plattformen:
 
 ### Frontend → Vercel
 - **URL:** https://church-connect-xi.vercel.app
+<img width="1919" height="1077" alt="image" src="https://github.com/user-attachments/assets/03024dc5-c946-4217-838e-7dd65b124004" />
+<img width="1911" height="1070" alt="image" src="https://github.com/user-attachments/assets/9e76129d-99a7-477e-9088-4563be940a70" />
+
 - **Framework:** Vite (React)
 - **Auto-Deploy:** Bei jedem Push auf `main`
 
