@@ -132,7 +132,30 @@ export default function Settings({ role }) {
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{profileData.bio}</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}><Button icon={Icon.Pencil} onClick={() => { setTempProfileData(profileData); setEditingProfile(true); }}>Edit profile</Button></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                  <Button variant="danger" size="sm" onClick={() => {
+                    if (window.confirm("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.")) {
+                      setLoading(true);
+                      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/delete-account`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                      })
+                        .then(res => res.json())
+                        .then(data => {
+                          if (data.success) {
+                            localStorage.removeItem('authToken');
+                            localStorage.removeItem('user');
+                            window.location.href = '/';
+                          } else {
+                            alert('Error deleting account: ' + data.message);
+                          }
+                        })
+                        .catch(err => alert('Error: ' + err.message))
+                        .finally(() => setLoading(false));
+                    }
+                  }} icon={Icon.Trash}>Delete account</Button>
+                  <Button icon={Icon.Pencil} onClick={() => { setTempProfileData(profileData); setEditingProfile(true); }}>Edit profile</Button>
+                </div>
               </>
             ) : (
               <>
@@ -149,32 +172,6 @@ export default function Settings({ role }) {
                 </div>
               </>
             )}
-          </Card>
-
-          <Card style={{ borderColor: "var(--danger)", background: "var(--danger-soft)" }}>
-            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4, color: "var(--danger)" }}>Danger zone</h3>
-            <p className="muted" style={{ fontSize: 13, marginBottom: 16 }}>Permanently delete your ChurchConnect account. This action cannot be undone.</p>
-            <Button variant="danger" onClick={() => {
-              if (window.confirm("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.")) {
-                setLoading(true);
-                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/delete-account`, {
-                  method: 'DELETE',
-                  headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-                })
-                  .then(res => res.json())
-                  .then(data => {
-                    if (data.success) {
-                      localStorage.removeItem('authToken');
-                      localStorage.removeItem('user');
-                      window.location.href = '/';
-                    } else {
-                      alert('Error deleting account: ' + data.message);
-                    }
-                  })
-                  .catch(err => alert('Error: ' + err.message))
-                  .finally(() => setLoading(false));
-              }
-            }} icon={Icon.Trash}>Delete account</Button>
           </Card>
         </div>
       )}

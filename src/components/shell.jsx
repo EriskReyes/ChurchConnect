@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from './icons';
 import { Avatar, IconButton, Badge, Menu, SearchInput } from './ui';
 import { useTranslation } from '../hooks/useTranslation';
@@ -143,6 +143,15 @@ export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark
   const [title, sub] = PAGE_TITLES[page] || ["", ""];
   const rc = ROLES[role].color;
   const [showNotifications, setShowNotifications] = useState(false);
+  const [userName, setUserName] = useState("User");
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      const userData = JSON.parse(user);
+      setUserName(userData.name || "User");
+    }
+  }, []);
 
   const notifications = [
     { id: 1, type: "member", icon: "👤", title: "Nuevo miembro", message: "Samuel Ortiz se unió a la congregación", time: "Hace 2h" },
@@ -202,9 +211,9 @@ export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark
 
         <Menu align="right" trigger={
           <button style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 8px 5px 6px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface-2)" }}>
-            <Avatar name="James Whitfield" size={isMobile ? 28 : 32} />
+            <Avatar name={userName} size={isMobile ? 28 : 32} />
             {!isMobile && <div style={{ textAlign: "left", lineHeight: 1.2 }}>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>Pastor James</div>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>{userName}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <span style={{ width: 6, height: 6, borderRadius: 9, background: rc }} />
                 <span className="faint" style={{ fontSize: 11 }}>{role}</span>
