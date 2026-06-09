@@ -141,6 +141,15 @@ export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark
   const { t } = useTranslation();
   const [title, sub] = PAGE_TITLES[page] || ["", ""];
   const rc = ROLES[role].color;
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const notifications = [
+    { id: 1, type: "member", icon: "👤", title: "Nuevo miembro", message: "Samuel Ortiz se unió a la congregación", time: "Hace 2h" },
+    { id: 2, type: "event", icon: "📅", title: "Evento próximo", message: "Retiro de verano comienza en 3 días", time: "Hace 5h" },
+    { id: 3, type: "donation", icon: "💝", title: "Donación reciente", message: "David Okafor donó $1,000 al fondo de construcción", time: "Hace 1h" },
+    { id: 4, type: "event", icon: "📅", title: "Eventos esta semana", message: "Bible Study mañana a las 7:00 PM", time: "Hace 4h" },
+    { id: 5, type: "member", icon: "👤", title: "Nuevo miembro", message: "Grace Lin completó su perfil", time: "Hace 1d" },
+  ];
   return (
     <header style={{ height: 70, flexShrink: 0, display: "flex", alignItems: "center", gap: 16, padding: "0 28px", borderBottom: "1px solid var(--border)", background: "color-mix(in srgb, var(--surface) 70%, transparent)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 15 }}>
       <IconButton icon={Icon.Filter} onClick={onToggleSidebar} title={t('topbar.search')} />
@@ -152,7 +161,42 @@ export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <SearchInput style={{ width: 210 }} placeholder={t('topbar.search')} />
         <IconButton icon={dark ? Icon.Sun : Icon.Moon} onClick={onToggleDark} title={t('topbar.darkMode')} />
-        <IconButton icon={Icon.Bell} badge title={t('topbar.notifications')} />
+
+        <div style={{ position: "relative" }}>
+          <button onClick={() => setShowNotifications(!showNotifications)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 10, border: "none", background: "transparent", cursor: "pointer", color: "var(--text-muted)", transition: "all 0.2s", position: "relative" }} onMouseEnter={e => e.currentTarget.style.color = "var(--text)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
+            <Icon.Bell size={20} />
+            {notifications.length > 0 && <span style={{ position: "absolute", top: 6, right: 6, width: 8, height: 8, borderRadius: "50%", background: "var(--warn)", animation: "pulse 2s infinite" }} />}
+          </button>
+
+          {showNotifications && (
+            <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 360, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", zIndex: 100, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: 16, borderBottom: "1px solid var(--border)" }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "var(--text)" }}>Notificaciones</h3>
+              </div>
+
+              <div style={{ maxHeight: 400, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>No hay notificaciones</div>
+                ) : notifications.map(notif => (
+                  <button key={notif.id} onClick={() => setShowNotifications(false)} style={{ padding: 12, borderBottom: "1px solid var(--border)", border: "none", background: "transparent", cursor: "pointer", textAlign: "left", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>{notif.icon}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 2 }}>{notif.title}</div>
+                        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4, lineHeight: 1.4 }}>{notif.message}</div>
+                        <div style={{ fontSize: 11, color: "var(--text-faint)" }}>{notif.time}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ padding: 12, borderTop: "1px solid var(--border)", textAlign: "center" }}>
+                <button style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", background: "transparent", border: "none", cursor: "pointer", padding: 0 }} onClick={() => setShowNotifications(false)}>Ver todas</button>
+              </div>
+            </div>
+          )}
+        </div>
 
         <Menu align="right" trigger={
           <button style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 8px 5px 6px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface-2)" }}>

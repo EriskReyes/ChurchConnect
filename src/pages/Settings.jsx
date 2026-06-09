@@ -10,6 +10,12 @@ export default function Settings({ role }) {
   const { language, setLanguage } = useContext(LanguageContext);
   const [profileImage, setProfileImage] = useState(null);
   const fileInputRef = useRef(null);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editingChurch, setEditingChurch] = useState(false);
+  const [profileData, setProfileData] = useState({ firstName: "James", lastName: "Whitfield", email: "pastor.james@example.com", phone: "(503) 555-0100", bio: "Lead Pastor at Grace Community Church. Husband, father, and lifelong learner." });
+  const [churchData, setChurchData] = useState({ name: "Grace Community Church", founded: "2010", address: "123 Main St, Portland, OR 97201", city: "Portland", description: "A welcoming community dedicated to grace, growth, and generosity." });
+  const [tempProfileData, setTempProfileData] = useState(profileData);
+  const [tempChurchData, setTempChurchData] = useState(churchData);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
@@ -58,21 +64,59 @@ export default function Settings({ role }) {
             <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Your profile</h3>
             <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>This information is visible to other church members.</p>
             <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 24 }}>
-              <Avatar name="James Whitfield" size={76} ring src={profileImage} />
+              <Avatar name={`${profileData.firstName} ${profileData.lastName}`} size={76} ring src={profileImage} />
               <div>
-                <Button variant="outline" icon={Icon.Image} onClick={() => fileInputRef.current?.click()}>Change photo</Button>
-                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handlePhotoUpload} style={{ display: "none" }} />
-                <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>JPG or PNG, max 4 MB</div>
+                {editingProfile && (
+                  <>
+                    <Button variant="outline" icon={Icon.Image} onClick={() => fileInputRef.current?.click()}>Change photo</Button>
+                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png" onChange={handlePhotoUpload} style={{ display: "none" }} />
+                    <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>JPG or PNG, max 4 MB</div>
+                  </>
+                )}
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <Field label="First name"><Input defaultValue="James" /></Field>
-              <Field label="Last name"><Input defaultValue="Whitfield" /></Field>
-              <Field label="Email"><Input defaultValue="pastor.james@example.com" /></Field>
-              <Field label="Phone"><Input defaultValue="(503) 555-0100" /></Field>
-              <div style={{ gridColumn: "1 / -1" }}><Field label="Bio"><Textarea defaultValue="Lead Pastor at Grace Community Church. Husband, father, and lifelong learner." /></Field></div>
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}><Button variant="outline">Cancel</Button><Button icon={Icon.Check}>Save changes</Button></div>
+
+            {!editingProfile ? (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 22 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>First name</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{profileData.firstName}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Last name</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{profileData.lastName}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Email</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{profileData.email}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Phone</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{profileData.phone}</div>
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Bio</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{profileData.bio}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}><Button icon={Icon.Pencil} onClick={() => { setTempProfileData(profileData); setEditingProfile(true); }}>Edit profile</Button></div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <Field label="First name"><Input value={tempProfileData.firstName} onChange={e => setTempProfileData({ ...tempProfileData, firstName: e.target.value })} /></Field>
+                  <Field label="Last name"><Input value={tempProfileData.lastName} onChange={e => setTempProfileData({ ...tempProfileData, lastName: e.target.value })} /></Field>
+                  <Field label="Email"><Input value={tempProfileData.email} onChange={e => setTempProfileData({ ...tempProfileData, email: e.target.value })} /></Field>
+                  <Field label="Phone"><Input value={tempProfileData.phone} onChange={e => setTempProfileData({ ...tempProfileData, phone: e.target.value })} /></Field>
+                  <div style={{ gridColumn: "1 / -1" }}><Field label="Bio"><Textarea value={tempProfileData.bio} onChange={e => setTempProfileData({ ...tempProfileData, bio: e.target.value })} /></Field></div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}>
+                  <Button variant="outline" onClick={() => setEditingProfile(false)}>Cancel</Button>
+                  <Button icon={Icon.Check} onClick={() => { setProfileData(tempProfileData); setEditingProfile(false); }}>Save changes</Button>
+                </div>
+              </>
+            )}
           </Card>
         </div>
       )}
@@ -82,14 +126,48 @@ export default function Settings({ role }) {
           <Card>
             <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Church details</h3>
             <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>Information about your congregation.</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <Field label="Church name"><Input defaultValue="Grace Community Church" /></Field>
-              <Field label="Founded"><Input type="number" defaultValue="2010" /></Field>
-              <Field label="Address"><Input defaultValue="123 Main St, Portland, OR 97201" /></Field>
-              <Field label="City"><Input defaultValue="Portland" /></Field>
-              <div style={{ gridColumn: "1 / -1" }}><Field label="Description"><Textarea defaultValue="A welcoming community dedicated to grace, growth, and generosity." /></Field></div>
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}><Button variant="outline">Cancel</Button><Button icon={Icon.Check}>Save changes</Button></div>
+
+            {!editingChurch ? (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 22 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Church name</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{churchData.name}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Founded</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{churchData.founded}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Address</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{churchData.address}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>City</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{churchData.city}</div>
+                  </div>
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Description</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{churchData.description}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}><Button icon={Icon.Pencil} onClick={() => { setTempChurchData(churchData); setEditingChurch(true); }}>Edit details</Button></div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <Field label="Church name"><Input value={tempChurchData.name} onChange={e => setTempChurchData({ ...tempChurchData, name: e.target.value })} /></Field>
+                  <Field label="Founded"><Input type="number" value={tempChurchData.founded} onChange={e => setTempChurchData({ ...tempChurchData, founded: e.target.value })} /></Field>
+                  <Field label="Address"><Input value={tempChurchData.address} onChange={e => setTempChurchData({ ...tempChurchData, address: e.target.value })} /></Field>
+                  <Field label="City"><Input value={tempChurchData.city} onChange={e => setTempChurchData({ ...tempChurchData, city: e.target.value })} /></Field>
+                  <div style={{ gridColumn: "1 / -1" }}><Field label="Description"><Textarea value={tempChurchData.description} onChange={e => setTempChurchData({ ...tempChurchData, description: e.target.value })} /></Field></div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}>
+                  <Button variant="outline" onClick={() => setEditingChurch(false)}>Cancel</Button>
+                  <Button icon={Icon.Check} onClick={() => { setChurchData(tempChurchData); setEditingChurch(false); }}>Save changes</Button>
+                </div>
+              </>
+            )}
           </Card>
         </div>
       )}

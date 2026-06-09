@@ -502,20 +502,6 @@ export default function ChatPage({ role }) {
                   fontFamily: "var(--font-body)"
                 }}
               />
-              <button
-                type="submit"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 18,
-                  padding: 0,
-                  color: "var(--primary)",
-                  transition: "all 0.2s"
-                }}
-              >
-                ✈️
-              </button>
             </form>
             <input ref={fileInputRef} type="file" accept={attachmentType === 'image' ? 'image/*' : attachmentType === 'gif' ? 'image/gif,video/*' : attachmentType === 'sticker' ? 'image/*' : '*'} onChange={handleFileUpload} style={{ display: "none" }} />
           </>

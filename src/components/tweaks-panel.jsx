@@ -132,7 +132,13 @@ export function useTweaks(defaults) {
 }
 
 export function TweaksPanel({ title = 'Tweaks', children }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('cc-tweaks-open') || 'false');
+    } catch {
+      return false;
+    }
+  });
   const dragRef = useRef(null);
   const offsetRef = useRef({ x: 16, y: 16 });
   const PAD = 16;
@@ -152,6 +158,10 @@ export function TweaksPanel({ title = 'Tweaks', children }) {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('cc-tweaks-open', JSON.stringify(open));
+  }, [open]);
+
+  useEffect(() => {
     if (!open) return;
     clampToViewport();
     if (typeof ResizeObserver === 'undefined') {
@@ -162,10 +172,6 @@ export function TweaksPanel({ title = 'Tweaks', children }) {
     ro.observe(document.documentElement);
     return () => ro.disconnect();
   }, [open, clampToViewport]);
-
-  useEffect(() => {
-    setOpen(true);
-  }, []);
 
   const onDragStart = (e) => {
     const panel = dragRef.current;
@@ -189,22 +195,28 @@ export function TweaksPanel({ title = 'Tweaks', children }) {
     window.addEventListener('mouseup', up);
   };
 
-  if (!open) return null;
   return (
     <>
       <style>{__TWEAKS_STYLE}</style>
-      <div ref={dragRef} className="twk-panel" data-omelette-chrome=""
-           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
-        <div className="twk-hd" onMouseDown={onDragStart}>
-          <b>{title}</b>
-          <button className="twk-x" aria-label="Close tweaks"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={() => setOpen(false)}>✕</button>
+      {!open && (
+        <button onClick={() => setOpen(true)} style={{ position: "fixed", bottom: 16, right: 16, zIndex: 2147483646, width: 48, height: 48, borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, transition: "all 0.2s", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} onMouseEnter={e => e.currentTarget.style.background = "var(--surface-2)"} onMouseLeave={e => e.currentTarget.style.background = "var(--surface)"} title="Abrir ajustes">
+          ⚙️
+        </button>
+      )}
+      {open && (
+        <div ref={dragRef} className="twk-panel" data-omelette-chrome=""
+             style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+          <div className="twk-hd" onMouseDown={onDragStart}>
+            <b>{title}</b>
+            <button className="twk-x" aria-label="Close tweaks"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={() => setOpen(false)}>✕</button>
+          </div>
+          <div className="twk-body">
+            {children}
+          </div>
         </div>
-        <div className="twk-body">
-          {children}
-        </div>
-      </div>
+      )}
     </>
   );
 }

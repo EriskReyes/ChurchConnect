@@ -192,7 +192,7 @@ export default function Gallery({ role, onNav }) {
                     <Icon.Play size={40} style={{ position: "absolute", color: "#fff", opacity: 0.8, background: "rgba(0,0,0,0.4)", borderRadius: "50%", padding: 8 }} />
                   </>
                 ) : (
-                  <img src={img.url} alt={img.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <img src={img.url} alt={img.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={(e) => { e.target.style.display = "none"; }} />
                 )}
               </div>
               <div style={{ padding: 14 }}>
@@ -239,7 +239,7 @@ export default function Gallery({ role, onNav }) {
                     {expandedImg.type === "video" ? (
                       <video src={expandedImg.url} style={{ width: "100%", maxHeight: "60vh", borderRadius: 12, background: "#000" }} controls autoPlay />
                     ) : (
-                      <img src={expandedImg.url} alt={expandedImg.name} style={{ width: "100%", maxHeight: "60vh", objectFit: "contain", borderRadius: 12 }} />
+                      <img src={expandedImg.url} alt={expandedImg.name} style={{ width: "100%", maxHeight: "60vh", objectFit: "contain", borderRadius: 12 }} onError={(e) => { e.target.style.display = "none"; }} />
                     )}
                   </div>
 
@@ -346,7 +346,7 @@ export default function Gallery({ role, onNav }) {
                       <Icon.Play size={40} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: "#fff", opacity: 0.8, background: "rgba(0,0,0,0.4)", borderRadius: "50%", padding: 8 }} />
                     </>
                   ) : (
-                    <img src={album.items[0].url} alt={album.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={album.items[0].url} alt={album.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={(e) => { e.target.style.display = "none"; }} />
                   )}
                 </>
               )}

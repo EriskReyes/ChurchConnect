@@ -16,6 +16,7 @@ import Reports from './pages/Reports';
 import ChatPage from './pages/ChatPage';
 import Gallery from './pages/Gallery';
 import Flyers from './pages/Flyers';
+import Staff from './pages/Staff';
 
 const TWEAK_DEFAULTS = {
   "primaryColor": "#3B5BA5",
@@ -40,6 +41,7 @@ const PAGES = {
   documents: Connect,
   gallery: Gallery,
   flyers: Flyers,
+  staff: Staff,
   reports: Reports,
 };
 

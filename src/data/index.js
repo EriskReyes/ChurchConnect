@@ -157,25 +157,25 @@ const baptisms = [
 ];
 
 const gallery = [
-  { id: 1, name: "Sunday Service May 31", url: "https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=600&h=400&fit=crop", category: "Services", date: "2026-05-31", uploadedBy: "James Whitfield" },
-  { id: 2, name: "Youth Group Game Night", url: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop", category: "Events", date: "2026-06-06", uploadedBy: "Marcus Bell" },
-  { id: 3, name: "Children's VBS Day 1", url: "https://images.unsplash.com/photo-1503252585905-862be92b374f?w=600&h=400&fit=crop", category: "Children", date: "2026-06-09", uploadedBy: "Sofia Reyes" },
-  { id: 4, name: "Community Food Drive", url: "https://images.unsplash.com/photo-1532996122724-8f6cb0c00f4b?w=600&h=400&fit=crop", category: "Outreach", date: "2026-06-13", uploadedBy: "Amara Diallo" },
-  { id: 5, name: "Worship Team Rehearsal", url: "https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=600&h=400&fit=crop", category: "Worship", date: "2026-06-05", uploadedBy: "Grace Lin" },
-  { id: 6, name: "Spring Retreat", url: "https://images.unsplash.com/photo-1529812114103-41953749a6d7?w=600&h=400&fit=crop", category: "Retreats", date: "2026-05-18", uploadedBy: "Marcus Bell" },
+  { id: 1, name: "Sunday Service May 31", url: "https://picsum.photos/600/400?random=1", category: "Services", date: "2026-05-31", uploadedBy: "James Whitfield" },
+  { id: 2, name: "Youth Group Game Night", url: "https://picsum.photos/600/400?random=2", category: "Events", date: "2026-06-06", uploadedBy: "Marcus Bell" },
+  { id: 3, name: "Children's VBS Day 1", url: "https://picsum.photos/600/400?random=3", category: "Children", date: "2026-06-09", uploadedBy: "Sofia Reyes" },
+  { id: 4, name: "Community Food Drive", url: "https://picsum.photos/600/400?random=4", category: "Outreach", date: "2026-06-13", uploadedBy: "Amara Diallo" },
+  { id: 5, name: "Worship Team Rehearsal", url: "https://picsum.photos/600/400?random=5", category: "Worship", date: "2026-06-05", uploadedBy: "Grace Lin" },
+  { id: 6, name: "Spring Retreat", url: "https://picsum.photos/600/400?random=6", category: "Retreats", date: "2026-05-18", uploadedBy: "Marcus Bell" },
 ];
 
 const flyers = [
-  { id: 1, type: "Service", title: "Sunday Worship Service", date: "2026-06-07", time: "10:00 AM", location: "Main Sanctuary", ministry: "Worship", image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=500&h=600&fit=crop", created: "2026-05-25", createdBy: "James Whitfield", tags: ["Worship", "Weekly"] },
-  { id: 2, type: "Event", title: "Youth Game Night", date: "2026-06-06", time: "6:30 PM", location: "Fellowship Hall", ministry: "Youth", image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=500&h=600&fit=crop", created: "2026-05-26", createdBy: "Marcus Bell", tags: ["Youth", "Fun"] },
-  { id: 3, type: "Announcement", title: "Community Food Drive", date: "2026-06-13", time: "9:00 AM", location: "Parking Lot", ministry: "Outreach", image: "https://images.unsplash.com/photo-1532996122724-8f6cb0c00f4b?w=500&h=600&fit=crop", created: "2026-05-20", createdBy: "Amara Diallo", tags: ["Outreach", "Service"] },
-  { id: 4, type: "Volunteer", title: "Volunteers Needed for VBS", date: "2026-06-09", time: "All Day", location: "Room 110", ministry: "Children", image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&h=600&fit=crop", created: "2026-05-18", createdBy: "Sofia Reyes", tags: ["Children", "Volunteer"] },
-  { id: 5, type: "Donation", title: "Building Fund Push", goal: "$150,000", progress: 64, ministry: "Finance", image: "https://images.unsplash.com/photo-1579621970563-ebec642fedbc?w=500&h=600&fit=crop", created: "2026-05-15", createdBy: "David Okafor", tags: ["Giving", "Finance"] },
-  { id: 6, type: "Ministry", title: "Join the Worship Team", ministry: "Worship", image: "https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=500&h=600&fit=crop", created: "2026-05-22", createdBy: "Grace Lin", tags: ["Music", "Worship"] },
-  { id: 7, type: "Class", title: "Bible Study — Paul's Letters", date: "2026-06-10", time: "7:00 PM", location: "Room 204", ministry: "Discipleship", image: "https://images.unsplash.com/photo-1507842217343-583f20270057?w=500&h=600&fit=crop", created: "2026-05-23", createdBy: "James Whitfield", tags: ["Bible", "Learning"] },
-  { id: 8, type: "Special Event", title: "Baptism Sunday 2026", date: "2026-06-21", time: "10:00 AM", location: "Main Sanctuary", ministry: "Pastoral", image: "https://images.unsplash.com/photo-1506361197048-46a72bb22e4d?w=500&h=600&fit=crop", created: "2026-05-10", createdBy: "James Whitfield", tags: ["Baptism", "Celebration"] },
-  { id: 9, type: "Prayer", title: "Prayer Meeting — Intercessory", date: "2026-06-08", time: "6:00 PM", location: "Room 101", ministry: "Pastoral", image: "https://images.unsplash.com/photo-1469036821159-87bcde51a331?w=500&h=600&fit=crop", created: "2026-05-24", createdBy: "James Whitfield", tags: ["Prayer", "Intercession"] },
-  { id: 10, type: "Conference", title: "Summer Leadership Summit", date: "2026-07-15", location: "Retreat Center", ministry: "Leadership", image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&h=600&fit=crop", created: "2026-05-12", createdBy: "David Okafor", tags: ["Leadership", "Summit"] },
+  { id: 1, type: "Service", title: "Sunday Worship Service", date: "2026-06-07", time: "10:00 AM", location: "Main Sanctuary", ministry: "Worship", image: "https://picsum.photos/500/600?random=11", created: "2026-05-25", createdBy: "James Whitfield", tags: ["Worship", "Weekly"] },
+  { id: 2, type: "Event", title: "Youth Game Night", date: "2026-06-06", time: "6:30 PM", location: "Fellowship Hall", ministry: "Youth", image: "https://picsum.photos/500/600?random=12", created: "2026-05-26", createdBy: "Marcus Bell", tags: ["Youth", "Fun"] },
+  { id: 3, type: "Announcement", title: "Community Food Drive", date: "2026-06-13", time: "9:00 AM", location: "Parking Lot", ministry: "Outreach", image: "https://picsum.photos/500/600?random=13", created: "2026-05-20", createdBy: "Amara Diallo", tags: ["Outreach", "Service"] },
+  { id: 4, type: "Volunteer", title: "Volunteers Needed for VBS", date: "2026-06-09", time: "All Day", location: "Room 110", ministry: "Children", image: "https://picsum.photos/500/600?random=14", created: "2026-05-18", createdBy: "Sofia Reyes", tags: ["Children", "Volunteer"] },
+  { id: 5, type: "Donation", title: "Building Fund Push", goal: "$150,000", progress: 64, ministry: "Finance", image: "https://picsum.photos/500/600?random=15", created: "2026-05-15", createdBy: "David Okafor", tags: ["Giving", "Finance"] },
+  { id: 6, type: "Ministry", title: "Join the Worship Team", ministry: "Worship", image: "https://picsum.photos/500/600?random=16", created: "2026-05-22", createdBy: "Grace Lin", tags: ["Music", "Worship"] },
+  { id: 7, type: "Class", title: "Bible Study — Paul's Letters", date: "2026-06-10", time: "7:00 PM", location: "Room 204", ministry: "Discipleship", image: "https://picsum.photos/500/600?random=17", created: "2026-05-23", createdBy: "James Whitfield", tags: ["Bible", "Learning"] },
+  { id: 8, type: "Special Event", title: "Baptism Sunday 2026", date: "2026-06-21", time: "10:00 AM", location: "Main Sanctuary", ministry: "Pastoral", image: "https://picsum.photos/500/600?random=18", created: "2026-05-10", createdBy: "James Whitfield", tags: ["Baptism", "Celebration"] },
+  { id: 9, type: "Prayer", title: "Prayer Meeting — Intercessory", date: "2026-06-08", time: "6:00 PM", location: "Room 101", ministry: "Pastoral", image: "https://picsum.photos/500/600?random=19", created: "2026-05-24", createdBy: "James Whitfield", tags: ["Prayer", "Intercession"] },
+  { id: 10, type: "Conference", title: "Summer Leadership Summit", date: "2026-07-15", location: "Retreat Center", ministry: "Leadership", image: "https://picsum.photos/500/600?random=20", created: "2026-05-12", createdBy: "David Okafor", tags: ["Leadership", "Summit"] },
 ];
 
 const DB = { members, events, ministries, donations, funds, givingTrend, attendanceTrend, sermons, prayers, posts, chats, chatThread, documents, tasks, baptisms, gallery, flyers };

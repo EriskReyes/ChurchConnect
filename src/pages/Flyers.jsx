@@ -28,7 +28,7 @@ function FlyerDetailModal({ open, onClose, flyer, onDelete, onEdit, role }) {
       footer={<><Button variant="outline" onClick={onClose}>Cerrar</Button>{role !== "Member" && <><Button icon={Icon.Pencil} onClick={onEdit}>Editar</Button><Button icon={Icon.Trash} variant="danger" onClick={handleDelete} disabled={deleting}>{deleting ? "Borrando..." : "Delete"}</Button></>}</>}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {flyer?.image && (
-          <div style={{ width: "100%", height: 250, borderRadius: 12, background: "var(--surface-2)", backgroundImage: `url(${flyer.image})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+          <img src={flyer.image} alt={flyer.title} style={{ width: "100%", height: 250, borderRadius: 12, objectFit: "cover", display: "block" }} onError={(e) => { e.target.style.display = "none"; }} />
         )}
         <div>
           <div style={{ fontSize: 12, fontWeight: 600, color: "var(--primary)", textTransform: "uppercase", letterSpacing: 0.5 }}>{flyer?.type}</div>
@@ -219,7 +219,7 @@ export default function Flyers({ role }) {
       <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "var(--gap)" }}>
         {filtered.map(f => (
           <Card key={f.id} hover onClick={() => setSelectedFlyer(f)} style={{ cursor: "pointer", overflow: "hidden" }}>
-            <div style={{ height: 140, background: "var(--surface-2)", backgroundImage: f.image ? `url(${f.image})` : "none", backgroundSize: "cover", backgroundPosition: "center", marginBottom: 12 }} />
+            {f.image && <img src={f.image} alt={f.title} style={{ width: "100%", height: 140, objectFit: "cover", marginBottom: 12, display: "block" }} onError={(e) => { e.target.style.display = "none"; }} />}
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--primary)", textTransform: "uppercase", letterSpacing: 0.5 }}>{f.type}</div>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", margin: "6px 0 8px 0", lineHeight: 1.3 }}>{f.title}</h3>
             <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>

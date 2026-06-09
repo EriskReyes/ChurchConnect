@@ -3,6 +3,7 @@ import { Icon } from '../components/icons';
 import { Card, Badge, Button, Avatar, SearchInput, Field, Input, Textarea, Select, Modal, IconButton, Menu } from '../components/ui';
 import DB from '../data';
 import { useTranslation } from '../hooks/useTranslation';
+import ChatPage from './ChatPage';
 
 const PRAYER_TONE = { Health: "danger", Guidance: "primary", Praise: "sage", Outreach: "warn", Youth: "primary" };
 
@@ -587,7 +588,7 @@ export default function Connect({ role, onNav }) {
       {tab === "ministries" && <Ministries role={role} />}
       {tab === "prayer" && <Prayer />}
       {tab === "community" && <Community role={role} />}
-      {tab === "chat" && <Chat role={role} />}
+      {tab === "chat" && <ChatPage role={role} />}
       {tab === "documents" && (
         <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
