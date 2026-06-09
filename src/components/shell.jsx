@@ -56,7 +56,8 @@ export function canAccess(role, key) {
 
 export function Sidebar({ active, onNav, collapsed, role, onLogout, className }) {
   const { t } = useTranslation();
-  const W = collapsed ? 76 : 256;
+  const isMobileSmall = typeof window !== 'undefined' && window.innerWidth < 480;
+  const W = collapsed ? 76 : (isMobileSmall ? 220 : 256);
 
   const navWithTranslations = NAV.map(grp => ({
     ...grp,
