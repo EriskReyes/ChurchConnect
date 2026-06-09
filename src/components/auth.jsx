@@ -44,7 +44,7 @@ export function AuthScreen({ onEnter }) {
   const [error, setError] = useState("");
   const [showChurchLogin, setShowChurchLogin] = useState(false);
   const [churchFormData, setChurchFormData] = useState({ email: "", code: "" });
-  const [formData, setFormData] = useState({ name: "", email: "pastor@gracecc.org", password: "password123", role: "Member" });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "Member" });
   const reg = mode === "register";
   const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
