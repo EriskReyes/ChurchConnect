@@ -95,19 +95,40 @@ export function AuthScreen({ onEnter }) {
       }
 
       console.log("Saving token to localStorage:", data.token.substring(0, 50));
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      console.log("Token saved, calling onEnter");
-      onEnter(data.user);
+
+      // Safely save to localStorage with error handling
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          console.log("Token saved successfully");
+        } else {
+          throw new Error("localStorage is not available");
+        }
+      } catch (storageError) {
+        console.error("localStorage error:", storageError);
+        if (storageError.name === 'QuotaExceededError') {
+          setError("Storage quota exceeded. Please clear your browser cache.");
+          setLoading(false);
+          return;
+        }
+        // Continue even if localStorage fails - data is in memory
+        console.warn("Continuing without localStorage");
+      }
+
+      console.log("Calling onEnter with user:", data.user);
+      // Delay slightly to ensure state updates
+      setTimeout(() => {
+        onEnter(data.user);
+      }, 100);
     } catch (err) {
       console.error("Auth error:", err);
       setError(err.message || "An error occurred");
-    } finally {
       setLoading(false);
     }
   };
   return (
-    <div style={{ height: "100vh", display: "flex", background: "var(--bg)" }}>
+    <div style={{ height: "100svh", minHeight: "100vh", display: "flex", background: "var(--bg)" }}>
       <div className="brand-side" style={{ display: "flex", flex: 1 }}><Brandside /></div>
 
       <div style={{ width: 480, maxWidth: "100%", flexShrink: 0, display: "flex", flexDirection: "column", justifyContent: "center", padding: "40px 56px", background: "var(--surface)" }}>

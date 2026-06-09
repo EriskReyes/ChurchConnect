@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component } from 'react';
 import { Icon } from './components/icons';
 import { Card, Button } from './components/ui';
 import { Sidebar, Topbar, canAccess } from './components/shell';
@@ -156,4 +156,41 @@ function Tweaks({ t, setTweak }) {
   );
 }
 
-export default App;
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Error caught by boundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ width: "100%", height: "100svh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: "20px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>Something went wrong</h1>
+          <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 24, maxWidth: 400 }}>
+            {this.state.error?.message || "An unexpected error occurred"}
+          </p>
+          <Button onClick={() => window.location.href = '/'}>Go to home</Button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const AppWithErrorBoundary = () => (
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
+export default AppWithErrorBoundary;
