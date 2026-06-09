@@ -376,7 +376,7 @@ export default function Sermons({ role }) {
     fetchSermons();
   };
 
-  let list = sermons.filter(s => s.title.toLowerCase().includes(q.toLowerCase()));
+  let list = sermons.filter(s => (s.title || '').toLowerCase().includes(q.toLowerCase()));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--gap)" }}>

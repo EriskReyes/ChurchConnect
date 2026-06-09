@@ -51,7 +51,7 @@ const ACCESS = {
 
 export function canAccess(role, key) {
   const a = ACCESS[role];
-  return a === "*" || a.includes(key);
+  return a === "*" || (Array.isArray(a) && a.includes(key));
 }
 
 export function Sidebar({ active, onNav, collapsed, role, onLogout, className }) {

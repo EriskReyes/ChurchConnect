@@ -269,7 +269,7 @@ export default function Events({ role }) {
   const ministries = ["All", ...new Set(events.map(e => e.ministry))]; // Eindeutige Ministerien fur Filter
   const list = events.filter(e =>  // Nach Ministerium und Suchbegriff filtern
       (filter === "All" || e.ministry === filter) &&
-      e.title.toLowerCase().includes(q.toLowerCase())
+      (e.title || '').toLowerCase().includes(q.toLowerCase())
   );
 
   const canEdit = role !== "Member"; // Nur Admins und Leiter durfen erstellen

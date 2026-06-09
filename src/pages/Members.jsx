@@ -198,7 +198,7 @@ export default function Members({ role }) {
     fetchMembers();
   };
 
-  let list = members.filter(m => m.name.toLowerCase().includes(q.toLowerCase()) || m.email.includes(q));
+  let list = members.filter(m => (m.name || '').toLowerCase().includes(q.toLowerCase()) || (m.email || '').includes(q));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--gap)" }}>

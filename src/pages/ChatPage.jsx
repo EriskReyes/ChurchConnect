@@ -204,7 +204,7 @@ export default function ChatPage({ role }) {
   };
 
   const filteredChats = chats.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (c.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

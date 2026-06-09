@@ -211,7 +211,7 @@ export default function Staff({ role }) {
     fetchStaff();
   };
 
-  let list = staff.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) || s.email.includes(q));
+  let list = staff.filter(s => (s.name || '').toLowerCase().includes(q.toLowerCase()) || (s.email || '').includes(q));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--gap)" }}>

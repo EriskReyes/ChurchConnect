@@ -161,8 +161,8 @@ export default function Flyers({ role }) {
 
   let filtered = flyers.filter(f => {
     const matchesType = filterType === "All" || f.type === filterType;
-    const matchesSearch = f.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          f.ministry.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (f.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (f.ministry || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesType && matchesSearch;
   });
 

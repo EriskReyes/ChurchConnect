@@ -94,8 +94,8 @@ export default function Documents({ role }) {
   let filtered = documents.filter(d => {
     const matchesType = filterType === "All" || d.type === filterType;
     const matchesAccess = filterAccess === "All" || d.access === filterAccess;
-    const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          d.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (d.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (d.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesType && matchesAccess && matchesSearch;
   });
 
