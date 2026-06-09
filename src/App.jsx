@@ -76,6 +76,14 @@ function App() {
   });
   const [page, setPage] = useState("dashboard");
   const [collapsed, setCollapsed] = useState(t.sidebar === "icons");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => { setCollapsed(t.sidebar === "icons"); }, [t.sidebar]);
 
@@ -108,11 +116,17 @@ function App() {
     setAuthed(false);
   };
 
+  const handleSidebarNav = (key) => {
+    nav(key);
+    if (isMobile) setSidebarOpen(false);
+  };
+
   return (
     <div className="app-shell" data-theme={theme} data-density={t.density} style={rootStyle}>
-      <Sidebar active={page} onNav={nav} collapsed={collapsed} role={role} onLogout={handleLogout} />
+      <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} className={isMobile && sidebarOpen ? "open" : ""} />
+      {isMobile && <div className={`sidebar-backdrop ${sidebarOpen ? "active" : ""}`} onClick={() => setSidebarOpen(false)} />}
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", height: "100%" }}>
-        <Topbar page={page} role={role} onRole={setRole} onToggleSidebar={() => setCollapsed(c => !c)} dark={t.dark} onToggleDark={() => setTweak("dark", !t.dark)} onLogout={handleLogout} />
+        <Topbar page={page} role={role} onRole={setRole} onToggleSidebar={isMobile ? () => setSidebarOpen(s => !s) : () => setCollapsed(c => !c)} dark={t.dark} onToggleDark={() => setTweak("dark", !t.dark)} onLogout={handleLogout} isMobile={isMobile} />
         <main className="main-scroll scroll-y" style={{ flex: 1, padding: "26px 28px 60px" }}>
           <div style={{ maxWidth: 1320, margin: "0 auto" }} key={page}>
             {PageComp ? <PageComp role={role} onNav={nav} /> : <Placeholder page={page} onNav={nav} />}

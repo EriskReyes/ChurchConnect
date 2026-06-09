@@ -109,3 +109,178 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  :root {
+    font-size: 16px;
+  }
+
+  #root {
+    width: 100%;
+    border-inline: none;
+  }
+
+  h1 {
+    font-size: 28px;
+    margin: 16px 0;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin: 12px 0;
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+}
+
+/* App shell responsive */
+.app-shell {
+  display: flex;
+  height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .app-shell > aside {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    width: 256px !important;
+    height: 100% !important;
+    z-index: 40 !important;
+    box-shadow: var(--shadow);
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(.16,.84,.44,1);
+    border-right: 1px solid var(--border);
+  }
+
+  .app-shell > aside.open {
+    transform: translateX(0);
+  }
+
+  .app-shell .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 35;
+    transition: opacity 0.28s;
+  }
+
+  .app-shell .sidebar-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Main content responsive */
+main {
+  padding: 26px 28px 60px;
+}
+
+@media (max-width: 768px) {
+  main {
+    padding: 20px 16px 60px;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 16px 12px 60px;
+  }
+}
+
+/* Auth screen responsive */
+@media (max-width: 768px) {
+  .fade-up {
+    padding: 20px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  [style*="width: 480px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .fade-up {
+    padding: 16px !important;
+  }
+
+  .fade-up h2 {
+    font-size: 18px !important;
+    margin-top: 8px !important;
+  }
+
+  .fade-up > p {
+    font-size: 13px !important;
+  }
+}
+
+/* Responsive tables */
+table {
+  min-width: 100%;
+}
+
+@media (max-width: 768px) {
+  table {
+    font-size: 13px;
+  }
+
+  table th, table td {
+    padding: 8px 10px !important;
+  }
+}
+
+/* Responsive cards and modals */
+@media (max-width: 640px) {
+  .card {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* Topbar responsive */
+@media (max-width: 768px) {
+  header {
+    padding: 0 16px !important;
+    gap: 12px !important;
+  }
+
+  header h1 {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  header {
+    padding: 0 12px !important;
+    gap: 8px !important;
+    height: 60px !important;
+  }
+
+  header h1 {
+    font-size: 14px !important;
+  }
+
+  header > div:nth-child(3) {
+    display: none !important;
+  }
+}

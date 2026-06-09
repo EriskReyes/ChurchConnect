@@ -43,4 +43,5 @@ export const Icon = {
   Trash: (p) => <S {...p}><path d="M4 6.5h16M9 6.5V4.5h6v2M6 6.5 7 20a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13.5"/></S>,
   Tag: (p) => <S {...p}><path d="M3 12V4h8l10 10-7 7Z"/><circle cx="7.5" cy="8.5" r="1.3"/></S>,
   Arrow: (p) => <S {...p}><path d="M5 12h14m0 0-6-6m6 6-6 6"/></S>,
+  Menu: (p) => <S {...p}><path d="M3 7h18M3 12h18M3 17h18"/></S>,
 };

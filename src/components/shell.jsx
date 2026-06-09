@@ -54,7 +54,7 @@ export function canAccess(role, key) {
   return a === "*" || a.includes(key);
 }
 
-export function Sidebar({ active, onNav, collapsed, role, onLogout }) {
+export function Sidebar({ active, onNav, collapsed, role, onLogout, className }) {
   const { t } = useTranslation();
   const W = collapsed ? 76 : 256;
 
@@ -68,7 +68,7 @@ export function Sidebar({ active, onNav, collapsed, role, onLogout }) {
   }));
 
   return (
-    <aside style={{
+    <aside className={className} style={{
       width: W, flexShrink: 0, height: "100%", background: "var(--surface)",
       borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column",
       transition: "width .28s cubic-bezier(.16,.84,.44,1)", zIndex: 20,
@@ -137,7 +137,7 @@ const PAGE_TITLES = {
   settings: ["Settings", "Manage your account and church"],
 };
 
-export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark, onLogout }) {
+export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark, onLogout, isMobile }) {
   const { t } = useTranslation();
   const [title, sub] = PAGE_TITLES[page] || ["", ""];
   const rc = ROLES[role].color;
@@ -152,14 +152,15 @@ export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark
   ];
   return (
     <header style={{ height: 70, flexShrink: 0, display: "flex", alignItems: "center", gap: 16, padding: "0 28px", borderBottom: "1px solid var(--border)", background: "color-mix(in srgb, var(--surface) 70%, transparent)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 15 }}>
-      <IconButton icon={Icon.Filter} onClick={onToggleSidebar} title={t('topbar.search')} />
+      {isMobile && <IconButton icon={Icon.Menu} onClick={onToggleSidebar} title="Menu" />}
+      {!isMobile && <IconButton icon={Icon.Filter} onClick={onToggleSidebar} title={t('topbar.search')} />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <h1 style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</h1>
         <div className="muted" style={{ fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <SearchInput style={{ width: 210 }} placeholder={t('topbar.search')} />
+        {!isMobile && <SearchInput style={{ width: 210 }} placeholder={t('topbar.search')} />}
         <IconButton icon={dark ? Icon.Sun : Icon.Moon} onClick={onToggleDark} title={t('topbar.darkMode')} />
 
         <div style={{ position: "relative" }}>
@@ -200,15 +201,15 @@ export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark
 
         <Menu align="right" trigger={
           <button style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 8px 5px 6px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--surface-2)" }}>
-            <Avatar name="James Whitfield" size={32} />
-            <div style={{ textAlign: "left", lineHeight: 1.2 }}>
+            <Avatar name="James Whitfield" size={isMobile ? 28 : 32} />
+            {!isMobile && <div style={{ textAlign: "left", lineHeight: 1.2 }}>
               <div style={{ fontSize: 13, fontWeight: 700 }}>Pastor James</div>
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <span style={{ width: 6, height: 6, borderRadius: 9, background: rc }} />
                 <span className="faint" style={{ fontSize: 11 }}>{role}</span>
               </div>
-            </div>
-            <Icon.ChevronDown size={15} style={{ color: "var(--text-faint)" }} />
+            </div>}
+            {!isMobile && <Icon.ChevronDown size={15} style={{ color: "var(--text-faint)" }} />}
           </button>
         } items={[
           { label: t('topbar.switchRole'), icon: Icon.Eye },
