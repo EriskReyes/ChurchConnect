@@ -136,7 +136,7 @@ export function AuthScreen({ onEnter }) {
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               {["Google", "Apple", "Church ID"].map(p => (
-                <button key={p} onClick={onEnter} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>{p}</button>
+                <button key={p} onClick={() => setError(`${p} authentication is not yet available. Please use email and password.`)} disabled style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-3)", fontSize: 13.5, fontWeight: 600, color: "var(--text-muted)", cursor: "not-allowed", opacity: 0.6 }} title="Coming soon">{p}</button>
               ))}
             </div>
           </div>
