@@ -12,6 +12,7 @@ import Donations from './pages/Donations';
 import Sermons from './pages/Sermons';
 import Settings from './pages/Settings';
 import Connect from './pages/Connect';
+import Reports from './pages/Reports';
 
 const TWEAK_DEFAULTS = {
   "primaryColor": "#3B5BA5",
@@ -34,6 +35,7 @@ const PAGES = {
   prayer: Connect,
   ministries: Connect,
   documents: Connect,
+  reports: Reports,
 };
 
 function Placeholder({ page, onNav }) {
