@@ -1,4 +1,4 @@
-import { useState, useContext, useRef } from 'react';
+import { useState, useContext, useRef, useEffect } from 'react';
 import { Icon } from '../components/icons';
 import { Card, Button, Avatar, Field, Input, Textarea } from '../components/ui';
 import { useTranslation } from '../hooks/useTranslation';
@@ -8,6 +8,13 @@ export default function Settings({ role }) {
   const [tab, setTab] = useState("profile");
   const { t } = useTranslation();
   const { language, setLanguage } = useContext(LanguageContext);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 600);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [profileImage, setProfileImage] = useState(null);
   const fileInputRef = useRef(null);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -78,7 +85,7 @@ export default function Settings({ role }) {
 
             {!editingProfile ? (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 22 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 22 }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>First name</div>
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{profileData.firstName}</div>
@@ -95,7 +102,7 @@ export default function Settings({ role }) {
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Phone</div>
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{profileData.phone}</div>
                   </div>
-                  <div style={{ gridColumn: "1 / -1" }}>
+                  <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Bio</div>
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{profileData.bio}</div>
                   </div>
@@ -104,12 +111,12 @@ export default function Settings({ role }) {
               </>
             ) : (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
                   <Field label="First name"><Input value={tempProfileData.firstName} onChange={e => setTempProfileData({ ...tempProfileData, firstName: e.target.value })} /></Field>
                   <Field label="Last name"><Input value={tempProfileData.lastName} onChange={e => setTempProfileData({ ...tempProfileData, lastName: e.target.value })} /></Field>
                   <Field label="Email"><Input value={tempProfileData.email} onChange={e => setTempProfileData({ ...tempProfileData, email: e.target.value })} /></Field>
                   <Field label="Phone"><Input value={tempProfileData.phone} onChange={e => setTempProfileData({ ...tempProfileData, phone: e.target.value })} /></Field>
-                  <div style={{ gridColumn: "1 / -1" }}><Field label="Bio"><Textarea value={tempProfileData.bio} onChange={e => setTempProfileData({ ...tempProfileData, bio: e.target.value })} /></Field></div>
+                  <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}><Field label="Bio"><Textarea value={tempProfileData.bio} onChange={e => setTempProfileData({ ...tempProfileData, bio: e.target.value })} /></Field></div>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}>
                   <Button variant="outline" onClick={() => setEditingProfile(false)}>Cancel</Button>
@@ -129,7 +136,7 @@ export default function Settings({ role }) {
 
             {!editingChurch ? (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 22 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 22 }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Church name</div>
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{churchData.name}</div>
@@ -146,7 +153,7 @@ export default function Settings({ role }) {
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>City</div>
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{churchData.city}</div>
                   </div>
-                  <div style={{ gridColumn: "1 / -1" }}>
+                  <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", marginBottom: 4 }}>Description</div>
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{churchData.description}</div>
                   </div>
@@ -155,12 +162,12 @@ export default function Settings({ role }) {
               </>
             ) : (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
                   <Field label="Church name"><Input value={tempChurchData.name} onChange={e => setTempChurchData({ ...tempChurchData, name: e.target.value })} /></Field>
                   <Field label="Founded"><Input type="number" value={tempChurchData.founded} onChange={e => setTempChurchData({ ...tempChurchData, founded: e.target.value })} /></Field>
                   <Field label="Address"><Input value={tempChurchData.address} onChange={e => setTempChurchData({ ...tempChurchData, address: e.target.value })} /></Field>
                   <Field label="City"><Input value={tempChurchData.city} onChange={e => setTempChurchData({ ...tempChurchData, city: e.target.value })} /></Field>
-                  <div style={{ gridColumn: "1 / -1" }}><Field label="Description"><Textarea value={tempChurchData.description} onChange={e => setTempChurchData({ ...tempChurchData, description: e.target.value })} /></Field></div>
+                  <div style={{ gridColumn: isMobile ? "auto" : "1 / -1" }}><Field label="Description"><Textarea value={tempChurchData.description} onChange={e => setTempChurchData({ ...tempChurchData, description: e.target.value })} /></Field></div>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}>
                   <Button variant="outline" onClick={() => setEditingChurch(false)}>Cancel</Button>

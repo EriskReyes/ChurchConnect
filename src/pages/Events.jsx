@@ -12,13 +12,17 @@ const fmtDate = d => new Date(d + "T00:00").toLocaleDateString("en-US", { weekda
 // --- Ereigniszeile in der Liste ---
 function EventRow({ e, onOpen }) {
   const day = new Date((e.date || "2026-06-01") + "T00:00"); // String in Date umwandeln
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   return (
       <Card hover onClick={() => onOpen(e)} style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "stretch" }}>
-          <div style={{ width: 84, flexShrink: 0, background: "var(--primary-soft)", color: "var(--on-primary-soft)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "14px 0" }}>
-            <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase" }}>{day.toLocaleDateString("en-US", { month: "short" })}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, fontFamily: "var(--font-head)", lineHeight: 1 }}>{day.getDate() || "1"}</div>
-            <div style={{ fontSize: 11, opacity: .8, marginTop: 2 }}>{day.toLocaleDateString("en-US", { weekday: "short" })}</div>
+        <div style={{ display: "flex", alignItems: "stretch", flexDirection: isMobile ? "column" : "row" }}>
+          <div style={{ width: isMobile ? "100%" : 84, flexShrink: 0, background: "var(--primary-soft)", color: "var(--on-primary-soft)", display: "flex", flexDirection: isMobile ? "row" : "column", alignItems: "center", justifyContent: isMobile ? "flex-start" : "center", padding: isMobile ? "12px 16px" : "14px 0", gap: isMobile ? 12 : 0 }}>
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase" }}>{day.toLocaleDateString("en-US", { month: "short" })}</div>
+              <div style={{ fontSize: isMobile ? 20 : 28, fontWeight: 700, fontFamily: "var(--font-head)", lineHeight: 1 }}>{day.getDate() || "1"}</div>
+            </div>
+            {isMobile && <div style={{ fontSize: 11, opacity: .8 }}>{day.toLocaleDateString("en-US", { weekday: "short" })}</div>}
+            {!isMobile && <div style={{ fontSize: 11, opacity: .8, marginTop: 2 }}>{day.toLocaleDateString("en-US", { weekday: "short" })}</div>}
           </div>
           <div style={{ flex: 1, minWidth: 0, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -32,7 +36,7 @@ function EventRow({ e, onOpen }) {
               <span style={{ display: "inline-flex", gap: 5, alignItems: "center" }}><Icon.Hands size={14} />{e.ministry}</span>
             </div>
           </div>
-          <div style={{ width: 180, flexShrink: 0, padding: "16px 20px", borderLeft: "1px solid var(--border)", display: "flex", flexDirection: "column", justifyContent: "center", gap: 7 }}>
+          <div style={{ width: isMobile ? "100%" : 180, flexShrink: 0, padding: "16px 20px", borderLeft: isMobile ? "none" : "1px solid var(--border)", borderTop: isMobile ? "1px solid var(--border)" : "none", display: "flex", flexDirection: "column", justifyContent: "center", gap: 7 }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
               <span className="muted">Registered</span>
               <span style={{ fontWeight: 700 }}>{e.attendees || 0}/{e.capacity || 100}</span>
