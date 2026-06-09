@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from './icons';
 import { Button, Input, Field } from './ui';
 import { useTranslation } from '../hooks/useTranslation';
@@ -42,8 +42,25 @@ export function AuthScreen({ onEnter }) {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({ name: "", email: "pastor@gracecc.org", password: "password123", role: "Member" });  const reg = mode === "register";
+  const [showChurchLogin, setShowChurchLogin] = useState(false);
+  const [churchFormData, setChurchFormData] = useState({ email: "", code: "" });
+  const [formData, setFormData] = useState({ name: "", email: "pastor@gracecc.org", password: "password123", role: "Member" });
+  const reg = mode === "register";
   const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    // Cargar script de Apple Sign In
+    const script = document.createElement('script');
+    script.src = 'https://appleid.cdn-apple.com/appleauth/static/jslib/appleid.auth.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   const handleAuth = async () => {
     if (!formData.email || !formData.password || (reg && !formData.name)) {
@@ -134,11 +151,82 @@ export function AuthScreen({ onEnter }) {
             <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "4px 0" }}>
               <div style={{ flex: 1, height: 1, background: "var(--border)" }} /><span className="faint" style={{ fontSize: 12 }}>or continue with</span><div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              {["Google", "Apple", "Church ID"].map(p => (
-                <button key={p} onClick={() => setError(`${p} authentication is not yet available. Please use email and password.`)} disabled style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-3)", fontSize: 13.5, fontWeight: 600, color: "var(--text-muted)", cursor: "not-allowed", opacity: 0.6 }} title="Coming soon">{p}</button>
-              ))}
-            </div>
+            {!showChurchLogin ? (
+              <div style={{ display: "flex", gap: 10 }}>
+                <button key="google" onClick={() => {
+                  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}&redirect_uri=${window.location.origin}/auth/google&response_type=id_token&scope=openid email profile&nonce=${Date.now()}`;
+                }} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>Google</button>
+
+                <button key="apple" onClick={async () => {
+                  if (!window.AppleID) {
+                    setError("Apple Sign In SDK not loaded. Please try again.");
+                    return;
+                  }
+                  try {
+                    setLoading(true);
+                    const response = await window.AppleID.auth.signIn();
+                    const { identityToken, user } = response.authorization;
+
+                    const res = await fetch(API + '/api/auth/apple', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        identityToken,
+                        user: {
+                          name: user?.name,
+                          email: user?.email
+                        }
+                      })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Apple login failed');
+
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    onEnter(data.user);
+                  } catch (err) {
+                    setError(err.message || "Apple Sign In failed");
+                  } finally {
+                    setLoading(false);
+                  }
+                }} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13.5, fontWeight: 600, color: "var(--text)" }} disabled={loading}>Apple</button>
+
+                <button key="church" onClick={() => setShowChurchLogin(true)} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>Church ID</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <Field label="Email"><Input type="email" placeholder="you@church.org" value={churchFormData.email} onChange={e => setChurchFormData({...churchFormData, email: e.target.value})} /></Field>
+                <Field label="Invite Code"><Input placeholder="ABC123" value={churchFormData.code} onChange={e => setChurchFormData({...churchFormData, code: e.target.value.toUpperCase()})} maxLength="6" /></Field>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <Button variant="outline" onClick={() => { setShowChurchLogin(false); setChurchFormData({ email: "", code: "" }); }} style={{ flex: 1 }}>Back</Button>
+                  <Button onClick={async () => {
+                    if (!churchFormData.email || !churchFormData.code) {
+                      setError("Please fill in all fields");
+                      return;
+                    }
+                    setLoading(true);
+                    setError("");
+                    try {
+                      const res = await fetch(API + '/api/auth/church-login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(churchFormData)
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.message || 'Church login failed');
+                      localStorage.setItem('authToken', data.token);
+                      localStorage.setItem('user', JSON.stringify(data.user));
+                      onEnter(data.user);
+                    } catch (err) {
+                      setError(err.message || "Church login failed");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }} style={{ flex: 1 }} disabled={loading}>{loading ? "Verifying..." : "Verify Code"}</Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <p className="faint" style={{ fontSize: 12, textAlign: "center", marginTop: 26, lineHeight: 1.6 }}>By continuing you agree to our Community Covenant & Privacy Policy.</p>
