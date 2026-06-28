@@ -26,7 +26,7 @@ function NewStaffModal({ open, onClose, onStaffCreated }) {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/members", {
+      const response = await fetch(`${API_URL}/api/members`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -110,7 +110,7 @@ function EditStaffModal({ open, onClose, onStaffUpdated, staff }) {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/members/${staff.id || staff._id}`, {
+      const response = await fetch(`${API_URL}/api/members/${staff.id || staff._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -161,11 +161,15 @@ function EditStaffModal({ open, onClose, onStaffUpdated, staff }) {
   );
 }
 
+const STAFF_ROLES = ["Staff", "Pastor", "Ministry Leader", "Treasurer"];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const STAFF_FALLBACK = DB.members.filter(m => STAFF_ROLES.includes(m.role));
+
 export default function Staff({ role }) {
   const { t } = useTranslation();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(null);
-  const [staff, setStaff] = useState(DB.members.filter(m => ["Pastor", "Ministry Leader", "Treasurer"].includes(m.role)));
+  const [staff, setStaff] = useState(STAFF_FALLBACK);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -179,18 +183,19 @@ export default function Staff({ role }) {
     try {
       setLoading(true);
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/members", {
+      const response = await fetch(`${API_URL}/api/members`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (response.ok) {
         const data = await response.json();
-        setStaff(data.filter(m => ["Pastor", "Ministry Leader", "Treasurer"].includes(m.role)));
+        const filtered = data.filter(m => STAFF_ROLES.includes(m.role));
+        setStaff(filtered.length > 0 ? filtered : STAFF_FALLBACK);
       } else {
-        setStaff(DB.members.filter(m => ["Pastor", "Ministry Leader", "Treasurer"].includes(m.role)));
+        setStaff(STAFF_FALLBACK);
       }
     } catch (err) {
       console.error("Error fetching staff:", err);
-      setStaff(DB.members.filter(m => ["Pastor", "Ministry Leader", "Treasurer"].includes(m.role)));
+      setStaff(STAFF_FALLBACK);
     } finally {
       setLoading(false);
     }
@@ -263,7 +268,7 @@ function StaffDetailModal({ staff, onClose, onDelete, onEdit, role, onExpandAvat
     setDeleting(true);
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/members/${staff.id || staff._id}`, {
+      const response = await fetch(`${API_URL}/api/members/${staff.id || staff._id}`, {
         method: "DELETE",
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
@@ -280,7 +285,7 @@ function StaffDetailModal({ staff, onClose, onDelete, onEdit, role, onExpandAvat
 
   return (
     <Modal open={!!staff} onClose={onClose} title="Staff profile" width={480}
-      footer={<><Button variant="outline" icon={Icon.Mail}>Message</Button>{role !== "Member" && <><Button icon={Icon.Pencil} onClick={onEdit}>Edit</Button><Button icon={Icon.Trash} variant="danger" onClick={handleDelete} disabled={deleting}>{deleting ? "Deleting..." : "Delete"}</Button></> }</>}>
+      footer={<><Button variant="outline" icon={Icon.Mail}>Message</Button>{role !== "Member" && <><Button icon={Icon.Edit} onClick={onEdit}>Edit</Button><Button icon={Icon.Trash} variant="danger" onClick={handleDelete} disabled={deleting}>{deleting ? "Deleting..." : "Delete"}</Button></> }</>}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 20 }}>
         <div onClick={onExpandAvatar} style={{ cursor: "pointer", position: "relative" }}>
           <Avatar name={staff.name} size={84} ring src={staff.avatar} />
@@ -294,7 +299,7 @@ function StaffDetailModal({ staff, onClose, onDelete, onEdit, role, onExpandAvat
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {[[Icon.Mail, "Email", staff.email], [Icon.Phone, "Phone", staff.phone], [Icon.Hands, "Department", staff.ministry], [Icon.Briefcase, "Position", staff.position], [Icon.Clock, "Schedule", staff.schedule]].map(([Ic, l, v]) => (
+        {[[Icon.Mail, "Email", staff.email], [Icon.Phone, "Phone", staff.phone], [Icon.Hands, "Department", staff.ministry], [Icon.Tag, "Position", staff.position], [Icon.Clock, "Schedule", staff.schedule]].map(([Ic, l, v]) => (
           <div key={l} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid var(--border)" }}>
             <div style={{ color: "var(--text-faint)" }}><Ic size={18} /></div>
             <div className="muted" style={{ fontSize: 13, width: 110 }}>{l}</div>

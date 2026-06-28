@@ -38,7 +38,9 @@ const ROLES = {
   "Pastor": { color: "#7A4E9E", desc: "Pastoral oversight" },
   "Treasurer": { color: "#4A7C59", desc: "Finance & giving" },
   "Ministry Leader": { color: "#B5742E", desc: "Team & events" },
+  "Staff": { color: "#2A6FA8", desc: "Staff access" },
   "Member": { color: "#1F4E5F", desc: "Community access" },
+  "Visitor": { color: "#888", desc: "Guest access" },
 };
 
 const ACCESS = {
@@ -46,11 +48,13 @@ const ACCESS = {
   "Pastor": "*",
   "Treasurer": ["dashboard", "members", "donations", "reports", "documents", "chat", "settings"],
   "Ministry Leader": ["dashboard", "events", "members", "staff", "ministries", "sermons", "documents", "flyers", "gallery", "prayer", "community", "chat", "settings"],
+  "Staff": ["dashboard", "events", "members", "staff", "ministries", "sermons", "documents", "flyers", "gallery", "prayer", "community", "chat", "settings"],
   "Member": ["dashboard", "events", "sermons", "flyers", "gallery", "prayer", "community", "chat", "settings"],
+  "Visitor": ["dashboard", "events", "sermons", "prayer", "community", "settings"],
 };
 
 export function canAccess(role, key) {
-  const a = ACCESS[role];
+  const a = ACCESS[role] ?? ACCESS["Member"];
   return a === "*" || (Array.isArray(a) && a.includes(key));
 }
 

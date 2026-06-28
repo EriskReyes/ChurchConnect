@@ -346,13 +346,15 @@ export default function Sermons({ role }) {
   }, []);
 
   const fetchSermons = async () => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/sermons", {
+      const response = await fetch(`${API_URL}/api/sermons`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (response.ok) {
-        setSermons(await response.json());
+        const data = await response.json();
+        setSermons(data.length > 0 ? data : DB.sermons);
       } else {
         setSermons(DB.sermons);
       }
