@@ -6,13 +6,13 @@ const memberSchema = new mongoose.Schema({
   phone: String,
   role: {
     type: String,
-    enum: ['Pastor', 'Member', 'Ministry Leader', 'Treasurer'],
+    enum: ['Pastor', 'Member', 'Ministry Leader', 'Treasurer', 'Staff', 'Visitor'],
     default: 'Member'
   },
   ministry: String,
   status: {
     type: String,
-    enum: ['Active', 'Inactive', 'New'],
+    enum: ['Active', 'Inactive', 'New', 'On Leave', 'Retired'],
     default: 'Active'
   },
   joinDate: { type: Date, default: Date.now },
@@ -21,6 +21,8 @@ const memberSchema = new mongoose.Schema({
     enum: ['Baptized', 'New believer', 'Not yet'],
     default: 'Not yet'
   },
+  position: String,
+  schedule: String,
   giving: { type: Number, default: 0 },
   group: String,
   church: { type: mongoose.Schema.Types.ObjectId, ref: 'Church' },

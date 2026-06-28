@@ -14,6 +14,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/staff', async (req, res) => {
+  try {
+    const staff = await Member.find({
+      role: { $in: ['Pastor', 'Ministry Leader', 'Treasurer', 'Staff'] }
+    }).populate('church');
+    res.json(staff);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const member = await Member.findById(req.params.id).populate('church');

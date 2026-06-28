@@ -183,13 +183,12 @@ export default function Staff({ role }) {
     try {
       setLoading(true);
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${API_URL}/api/members`, {
+      const response = await fetch(`${API_URL}/api/members/staff`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {}
       });
       if (response.ok) {
         const data = await response.json();
-        const filtered = data.filter(m => STAFF_ROLES.includes(m.role));
-        setStaff(filtered.length > 0 ? filtered : STAFF_FALLBACK);
+        setStaff(data.length > 0 ? data : STAFF_FALLBACK);
       } else {
         setStaff(STAFF_FALLBACK);
       }
