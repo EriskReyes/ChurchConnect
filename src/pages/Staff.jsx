@@ -244,12 +244,19 @@ export default function Staff({ role }) {
       <EditStaffModal open={editing} onClose={() => setEditing(false)} onStaffUpdated={handleStaffUpdated} staff={selected} />
 
       {expandedAvatar && (
-        <div onClick={() => setExpandedAvatar(null)} style={{ position: "fixed", inset: 0, zIndex: 101, background: "rgba(13,20,33,.8)", backdropFilter: "blur(4px)", display: "grid", placeItems: "center", padding: 24, cursor: "pointer" }}>
-          <div onClick={e => e.stopPropagation()} style={{ maxWidth: 500, cursor: "default" }}>
-            <img src={expandedAvatar.avatar} alt={expandedAvatar.name} style={{ width: "100%", height: "auto", borderRadius: 16, maxHeight: "80vh", objectFit: "contain" }} />
+        <div onClick={() => setExpandedAvatar(null)} style={{ position: "fixed", inset: 0, zIndex: 101, background: "rgba(13,20,33,.85)", backdropFilter: "blur(6px)", display: "grid", placeItems: "center", padding: 24, cursor: "pointer" }}>
+          <div onClick={e => e.stopPropagation()} style={{ maxWidth: 480, width: "100%", cursor: "default", position: "relative" }}>
+            <button onClick={() => setExpandedAvatar(null)} style={{ position: "absolute", top: -16, right: -16, zIndex: 10, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", fontSize: 20, display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(4px)" }}>×</button>
+            {expandedAvatar.avatar ? (
+              <img src={expandedAvatar.avatar} alt={expandedAvatar.name} style={{ width: "100%", height: "auto", borderRadius: 20, maxHeight: "70vh", objectFit: "contain", display: "block" }} />
+            ) : (
+              <div style={{ width: "100%", aspectRatio: "1", borderRadius: 20, background: "var(--surface-2)", display: "grid", placeItems: "center" }}>
+                <Avatar name={expandedAvatar.name} size={180} />
+              </div>
+            )}
             <div style={{ marginTop: 20, textAlign: "center", color: "#fff" }}>
-              <h2 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 8px 0" }}>{expandedAvatar.name}</h2>
-              <p style={{ fontSize: 14, opacity: 0.8, margin: 0 }}>{expandedAvatar.role} • {expandedAvatar.ministry}</p>
+              <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px 0" }}>{expandedAvatar.name}</h2>
+              <p style={{ fontSize: 14, opacity: 0.75, margin: 0 }}>{expandedAvatar.role} • {expandedAvatar.ministry}</p>
             </div>
           </div>
         </div>
@@ -287,9 +294,9 @@ function StaffDetailModal({ staff, onClose, onDelete, onEdit, role, onExpandAvat
       footer={<><Button variant="outline" icon={Icon.Mail}>Message</Button>{role !== "Member" && <><Button icon={Icon.Edit} onClick={onEdit}>Edit</Button><Button icon={Icon.Trash} variant="danger" onClick={handleDelete} disabled={deleting}>{deleting ? "Deleting..." : "Delete"}</Button></> }</>}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 20 }}>
         <div onClick={onExpandAvatar} style={{ cursor: "pointer", position: "relative" }}>
-          <Avatar name={staff.name} size={84} ring src={staff.avatar} />
-          <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(0,0,0,0)", borderRadius: "50%", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.3)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,0)"}>
-            <Icon.Eye size={20} style={{ color: "#fff", opacity: 0 }} />
+          <Avatar name={staff.name} size={120} ring src={staff.avatar} />
+          <div className="avatar-hover-overlay" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(0,0,0,0)", borderRadius: "50%", transition: "background 0.2s" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.35)"; e.currentTarget.querySelector("svg").style.opacity = "1"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0)"; e.currentTarget.querySelector("svg").style.opacity = "0"; }}>
+            <Icon.Eye size={22} style={{ color: "#fff", opacity: 0, transition: "opacity 0.2s" }} />
           </div>
         </div>
         <h3 style={{ fontSize: 20, fontWeight: 700, marginTop: 14, color: "var(--text)" }}>{staff.name}</h3>
