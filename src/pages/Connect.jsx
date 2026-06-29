@@ -465,8 +465,8 @@ export default function Connect({ role, onNav }) {
   const [docCategory, setDocCategory] = useState("Finance");
   const [gallery, setGallery] = useState(DB.gallery);
   const [uploadImg, setUploadImg] = useState(false);
-  const [imgName, setImgName] = useState("");
-  const [imgUrl, setImgUrl] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [imgUrlPaste, setImgUrlPaste] = useState("");
   const [imgCategory, setImgCategory] = useState("Events");
   const [docFilter, setDocFilter] = useState("All");
   const [imgFilter, setImgFilter] = useState("All");
@@ -512,55 +512,53 @@ export default function Connect({ role, onNav }) {
   };
 
   const handleAddImage = async () => {
-    if (!imgName) return;
+    const toUpload = [...selectedFiles];
+    if (imgUrlPaste.trim()) toUpload.push({ name: imgUrlPaste.split('/').pop().split('?')[0] || "Image", url: imgUrlPaste.trim() });
+    if (!toUpload.length) return;
 
-    let imageUrl = imgUrl;
-    if (!imageUrl) {
-      alert("Por favor carga una imagen o proporciona una URL");
-      return;
-    }
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const token = localStorage.getItem("authToken");
+    const today = new Date().toISOString().split('T')[0];
 
-    const newImg = {
-      id: gallery.length + 1,
-      name: imgName,
-      url: imageUrl,
+    const newImgs = toUpload.map((f, i) => ({
+      id: gallery.length + i + 1,
+      name: f.name,
+      url: f.url,
       category: imgCategory,
-      date: new Date().toISOString().split('T')[0],
+      date: today,
       uploadedBy: "You"
-    };
+    }));
 
-    try {
-      const token = localStorage.getItem("authToken");
-      await fetch("http://localhost:5000/api/gallery", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
-        body: JSON.stringify(newImg)
-      });
-    } catch (err) {
-      console.error("Error saving to server:", err);
+    for (const img of newImgs) {
+      try {
+        await fetch(`${API_URL}/api/gallery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+          body: JSON.stringify(img)
+        });
+      } catch (err) { console.error("Error saving photo:", err); }
     }
 
-    setGallery([...gallery, newImg]);
-    setImgName("");
-    setImgUrl("");
-    setImgCategory("Events");
+    setGallery(prev => [...prev, ...newImgs]);
+    setSelectedFiles([]);
+    setImgUrlPaste("");
     setUploadImg(false);
   };
 
   const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImgUrl(event.target.result);
-      if (!imgName) setImgName(file.name.replace(/\.[^/.]+$/, ""));
-    };
-    reader.readAsDataURL(file);
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSelectedFiles(prev => [...prev, { name: file.name.replace(/\.[^/.]+$/, ""), url: event.target.result }]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
   };
+
+  const closeUploadImg = () => { setUploadImg(false); setSelectedFiles([]); setImgUrlPaste(""); };
 
   const handleDeleteImage = (id) => {
     setGallery(gallery.filter(img => img.id !== id));
@@ -684,35 +682,6 @@ export default function Connect({ role, onNav }) {
               </Card>
             ))}
           </div>
-          <Modal open={uploadImg} onClose={() => setUploadImg(false)} title="Add image" width={500}
-            footer={<><Button variant="outline" onClick={() => { setUploadImg(false); setImgUrl(""); setImgName(""); }}>Cancel</Button><Button icon={Icon.Plus} onClick={handleAddImage} disabled={!imgName}>Add photo</Button></>}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <Field label="Photo name *"><Input placeholder="Domingo servicio" value={imgName} onChange={e => setImgName(e.target.value)} /></Field>
-
-              <Field label="Choose photo or paste URL">
-                <div style={{ display: "flex", gap: 12, flexDirection: "column" }}>
-                  <label style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, border: "2px dashed var(--border)", borderRadius: 11, cursor: "pointer", background: "var(--surface-2)", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.borderColor = "var(--primary)"} onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
-                    <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: "none" }} />
-                    <div style={{ textAlign: "center" }}>
-                      <Icon.Image size={32} style={{ color: "var(--primary)", marginBottom: 8 }} />
-                      <div style={{ fontWeight: 600 }}>Click to upload or drag</div>
-                      <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>PNG, JPG, GIF up to 10MB</div>
-                    </div>
-                  </label>
-                  {imgUrl && <div style={{ fontSize: 12, padding: 8, background: "var(--accent-soft)", borderRadius: 8, color: "var(--accent)" }}>✓ Foto cargada</div>}
-                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>O pega una URL:</div>
-                  <Input placeholder="https://..." value={imgUrl.startsWith("data:") ? "" : imgUrl} onChange={e => setImgUrl(e.target.value)} />
-                </div>
-              </Field>
-
-              <Field label="Album/Category *">
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Select value={imgCategory} onChange={e => setImgCategory(e.target.value)} options={["Events", "Services", "Retreats", "Children", "Outreach", "Worship"]} style={{ flex: 1 }} />
-                </div>
-                <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}>Selecciona un álbum existente o escribe uno nuevo</div>
-              </Field>
-            </div>
-          </Modal>
           <Modal open={!!expandedImg} onClose={() => setExpandedImg(null)} title={expandedImg?.name} width={800}>
             <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "center" }}>
               {expandedImg && <img src={expandedImg.url} alt={expandedImg.name} style={{ width: "100%", maxHeight: "60vh", objectFit: "contain", borderRadius: 12 }} />}
@@ -727,6 +696,46 @@ export default function Connect({ role, onNav }) {
           </Modal>
         </div>
       )}
+
+      <Modal open={uploadImg} onClose={closeUploadImg} title="Subir fotos" width={560}
+        footer={<>
+          <Button variant="outline" onClick={closeUploadImg}>Cancelar</Button>
+          <Button icon={Icon.Plus} onClick={handleAddImage} disabled={!selectedFiles.length && !imgUrlPaste.trim()}>
+            Subir {selectedFiles.length + (imgUrlPaste.trim() ? 1 : 0) || ""} foto{selectedFiles.length + (imgUrlPaste.trim() ? 1 : 0) !== 1 ? "s" : ""}
+          </Button>
+        </>}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 24px", border: "2px dashed var(--border)", borderRadius: 12, cursor: "pointer", background: "var(--surface-2)", transition: "border-color 0.2s" }} onMouseEnter={e => e.currentTarget.style.borderColor = "var(--primary)"} onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
+            <input type="file" accept="image/*" multiple onChange={handleFileSelect} style={{ display: "none" }} />
+            <Icon.Image size={36} style={{ color: "var(--primary)", marginBottom: 10 }} />
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Click para seleccionar fotos</div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>PNG, JPG, GIF — puedes seleccionar varias a la vez</div>
+          </label>
+
+          {selectedFiles.length > 0 && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{selectedFiles.length} foto{selectedFiles.length !== 1 ? "s" : ""} seleccionada{selectedFiles.length !== 1 ? "s" : ""}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: 8 }}>
+                {selectedFiles.map((f, i) => (
+                  <div key={i} style={{ position: "relative" }}>
+                    <img src={f.url} alt={f.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8, display: "block" }} />
+                    <button onClick={() => setSelectedFiles(prev => prev.filter((_, j) => j !== i))} style={{ position: "absolute", top: 3, right: 3, background: "rgba(0,0,0,0.65)", border: "none", color: "#fff", borderRadius: "50%", width: 20, height: 20, display: "grid", placeItems: "center", cursor: "pointer", fontSize: 15, lineHeight: 1 }}>×</button>
+                    <div style={{ fontSize: 10, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text-muted)" }}>{f.name}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Field label="O pega una URL de imagen">
+            <Input placeholder="https://ejemplo.com/foto.jpg" value={imgUrlPaste} onChange={e => setImgUrlPaste(e.target.value)} />
+          </Field>
+
+          <Field label="Álbum / Categoría">
+            <Select value={imgCategory} onChange={e => setImgCategory(e.target.value)} options={["Events", "Services", "Retreats", "Children", "Outreach", "Worship"]} />
+          </Field>
+        </div>
+      </Modal>
     </div>
   );
 }
