@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Admin', 'Pastor', 'Treasurer', 'Ministry Leader', 'Member', 'Visitor'],
+    enum: ['Admin', 'Pastor', 'Treasurer', 'Ministry Leader', 'Staff', 'Member', 'Visitor'],
     default: 'Member'
   },
   church: { type: mongoose.Schema.Types.ObjectId, ref: 'Church' },

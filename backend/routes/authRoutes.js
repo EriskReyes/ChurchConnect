@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import RoleCode from '../models/RoleCode.js';
 import InviteCode from '../models/InviteCode.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { OAuth2Client } from 'google-auth-library';
@@ -21,7 +22,7 @@ router.post('/register', async (req, res) => {
     if (userExists) {
       return res.status(400).json({ message: 'Email already in use' });
     }
-    const user = await User.create({ name, email, password, role: role || 'Member' });
+    const user = await User.create({ name, email, password, role: 'Member' });
     const token = generateToken(user._id, user.role);
     res.status(201).json({
       success: true,
@@ -200,6 +201,42 @@ router.post('/church-login', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Church login failed: ' + error.message });
+  }
+});
+
+// Usar código para upgrade de rol
+router.post('/upgrade-role', protect, async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ message: 'Código requerido' });
+
+    const roleCode = await RoleCode.findOne({ code: code.trim().toUpperCase() });
+    if (!roleCode) return res.status(404).json({ message: 'Código inválido' });
+    if (roleCode.usedBy) return res.status(400).json({ message: 'Este código ya fue usado' });
+    if (roleCode.expiresAt && roleCode.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'Este código ha expirado' });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.userId,
+      { role: roleCode.role },
+      { new: true }
+    );
+
+    await RoleCode.findByIdAndUpdate(roleCode._id, {
+      usedBy: updatedUser.email,
+      usedAt: new Date()
+    });
+
+    const newToken = generateToken(updatedUser._id, updatedUser.role);
+    res.json({
+      message: `Ahora eres ${roleCode.role}`,
+      role: updatedUser.role,
+      token: newToken,
+      user: { id: updatedUser._id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

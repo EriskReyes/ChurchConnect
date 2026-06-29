@@ -13,13 +13,17 @@ import documentRoutes from './routes/documentRoutes.js';
 import sermonRoutes from './routes/sermonRoutes.js';
 import prayerRequestRoutes from './routes/prayerRequestRoutes.js';
 import postRoutes from './routes/postRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import AdminCode from './models/AdminCode.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-connectDB();
+connectDB().then(() => {
+  AdminCode.getOrCreate().then(doc => console.log('Admin code ready:', doc.code));
+});
 
 app.use(cors({
   origin: function(origin, callback) {
@@ -44,6 +48,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/sermons', sermonRoutes);
 app.use('/api/prayer-requests', prayerRequestRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'Backend is running' });

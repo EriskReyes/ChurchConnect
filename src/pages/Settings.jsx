@@ -40,6 +40,113 @@ export default function Settings({ role }) {
     }
   }, []);
 
+  const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  // --- Admin panel state ---
+  const [adminCode, setAdminCode] = useState('');
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminMsg, setAdminMsg] = useState(null);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [roleChanges, setRoleChanges] = useState({});
+  const [savingRole, setSavingRole] = useState({});
+  const [savedRole, setSavedRole] = useState({});
+  const [search, setSearch] = useState('');
+  const [changingCode, setChangingCode] = useState(false);
+  const [newCode, setNewCode] = useState('');
+  const [changeCodeMsg, setChangeCodeMsg] = useState(null);
+  const [changeCodeLoading, setChangeCodeLoading] = useState(false);
+
+  const authHeader = () => ({
+    'Content-Type': 'application/json',
+    'x-admin-code': adminCode
+  });
+
+  const handleVerifyCode = async () => {
+    if (!adminCode.trim()) return;
+    setAdminLoading(true);
+    setAdminMsg(null);
+    try {
+      const res = await fetch(`${API}/api/admin/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: adminCode.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) { setAdminMsg({ ok: false, text: data.message }); return; }
+      setAdminUnlocked(true);
+      setAdminMsg(null);
+      fetchUsers();
+    } catch { setAdminMsg({ ok: false, text: 'Error de conexión' }); }
+    finally { setAdminLoading(false); }
+  };
+
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await fetch(`${API}/api/admin/users`, { headers: authHeader() });
+      if (res.ok) setUsers(await res.json());
+    } catch {}
+    finally { setUsersLoading(false); }
+  };
+
+  const handleSaveRole = async (userId) => {
+    const newRole = roleChanges[userId];
+    if (!newRole) return;
+    setSavingRole(prev => ({ ...prev, [userId]: true }));
+    try {
+      const res = await fetch(`${API}/api/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: authHeader(),
+        body: JSON.stringify({ role: newRole })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.message); return; }
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u));
+      setRoleChanges(prev => { const n = { ...prev }; delete n[userId]; return n; });
+      setSavedRole(prev => ({ ...prev, [userId]: true }));
+      setTimeout(() => setSavedRole(prev => { const n = { ...prev }; delete n[userId]; return n; }), 2000);
+    } catch { alert('Error al guardar'); }
+    finally { setSavingRole(prev => ({ ...prev, [userId]: false })); }
+  };
+
+  const handleChangeCode = async () => {
+    if (!newCode.trim() || newCode.trim().length < 6) {
+      setChangeCodeMsg({ ok: false, text: 'El nuevo código debe tener al menos 6 caracteres' });
+      return;
+    }
+    setChangeCodeLoading(true);
+    setChangeCodeMsg(null);
+    try {
+      const res = await fetch(`${API}/api/admin/change-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
+        body: JSON.stringify({ currentCode: adminCode, newCode: newCode.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) { setChangeCodeMsg({ ok: false, text: data.message }); return; }
+      setAdminCode(newCode.trim());
+      setNewCode('');
+      setChangingCode(false);
+      setChangeCodeMsg({ ok: true, text: '✓ Código actualizado' });
+      setTimeout(() => setChangeCodeMsg(null), 3000);
+    } catch { setChangeCodeMsg({ ok: false, text: 'Error de conexión' }); }
+    finally { setChangeCodeLoading(false); }
+  };
+
+  const lockAdmin = () => {
+    setAdminUnlocked(false);
+    setAdminCode('');
+    setUsers([]);
+    setRoleChanges({});
+    setSearch('');
+    setChangingCode(false);
+    setNewCode('');
+    setChangeCodeMsg(null);
+    setAdminMsg(null);
+  };
+
   const [profileImage, setProfileImage] = useState(null);
   const fileInputRef = useRef(null);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -65,12 +172,17 @@ export default function Settings({ role }) {
     reader.readAsDataURL(file);
   };
 
-  const tabs = ["profile", "church", "preferences", "languages"];
+  useEffect(() => {
+    if (tab !== 'access') lockAdmin();
+  }, [tab]);
+
+  const tabs = ["profile", "church", "preferences", "languages", "access"];
   const tabLabels = {
     profile: "Profile",
     church: "Church",
     preferences: "Preferences",
     languages: t('settings.languages'),
+    access: "Acceso",
   };
 
   return (
@@ -154,7 +266,7 @@ export default function Settings({ role }) {
                         .finally(() => setLoading(false));
                     }
                   }} icon={Icon.Trash}>Delete account</Button>
-                  <Button icon={Icon.Pencil} onClick={() => { setTempProfileData(profileData); setEditingProfile(true); }}>Edit profile</Button>
+                  <Button icon={Icon.Edit} onClick={() => { setTempProfileData(profileData); setEditingProfile(true); }}>Edit profile</Button>
                 </div>
               </>
             ) : (
@@ -206,7 +318,7 @@ export default function Settings({ role }) {
                     <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", lineHeight: 1.5 }}>{churchData.description}</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}><Button icon={Icon.Pencil} onClick={() => { setTempChurchData(churchData); setEditingChurch(true); }}>Edit details</Button></div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}><Button icon={Icon.Edit} onClick={() => { setTempChurchData(churchData); setEditingChurch(true); }}>Edit details</Button></div>
               </>
             ) : (
               <>
@@ -241,6 +353,163 @@ export default function Settings({ role }) {
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}><Button>Save preferences</Button></div>
           </Card>
+        </div>
+      )}
+
+      {tab === "access" && (
+        <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          {!adminUnlocked ? (
+            <Card>
+              <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
+                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--primary-soft)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                  <Icon.Lock size={26} style={{ color: "var(--primary)" }} />
+                </div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Panel de Administración</h3>
+                <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>Ingresa el código de acceso para gestionar roles de usuarios.</p>
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", maxWidth: 440, margin: "0 auto" }}>
+                <input
+                  type="password"
+                  value={adminCode}
+                  onChange={e => setAdminCode(e.target.value)}
+                  placeholder="Código de acceso"
+                  onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
+                  style={{
+                    flex: 1, minWidth: 200, padding: "11px 14px", fontSize: 14, fontWeight: 600,
+                    borderRadius: "var(--r-md)", border: "1.5px solid var(--border)",
+                    background: "var(--surface-2)", color: "var(--text)", outline: "none"
+                  }}
+                />
+                <button onClick={handleVerifyCode} disabled={adminLoading || !adminCode.trim()} style={{
+                  padding: "11px 24px", fontSize: 14, fontWeight: 700, borderRadius: "var(--r-md)",
+                  background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer", opacity: adminLoading ? 0.7 : 1
+                }}>{adminLoading ? "..." : "Entrar"}</button>
+              </div>
+              {adminMsg && (
+                <div style={{
+                  marginTop: 14, padding: "10px 14px", borderRadius: "var(--r-md)", fontSize: 13.5, fontWeight: 600,
+                  background: "var(--error-soft, #fdecea)", color: "var(--error, #c62828)", textAlign: "center"
+                }}>{adminMsg.text}</div>
+              )}
+            </Card>
+          ) : (
+            <>
+              <Card style={{ padding: "14px 18px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: "var(--primary-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Icon.Shield size={18} style={{ color: "var(--primary)" }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>Modo Admin activo</div>
+                      <div className="muted" style={{ fontSize: 12 }}>{users.length} usuarios cargados</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => setChangingCode(v => !v)} style={{
+                      padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
+                      background: "none", color: "var(--primary)", border: "1.5px solid var(--primary)", cursor: "pointer"
+                    }}>Cambiar código</button>
+                    <button onClick={lockAdmin} style={{
+                      padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
+                      background: "var(--surface-2)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"
+                    }}>Salir</button>
+                  </div>
+                </div>
+
+                {changingCode && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Nuevo código de acceso</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <input
+                        type="password"
+                        value={newCode}
+                        onChange={e => setNewCode(e.target.value)}
+                        placeholder="Mínimo 6 caracteres"
+                        style={{
+                          flex: 1, minWidth: 180, padding: "9px 12px", fontSize: 13, fontWeight: 600,
+                          borderRadius: "var(--r-md)", border: "1.5px solid var(--border)",
+                          background: "var(--surface-2)", color: "var(--text)", outline: "none"
+                        }}
+                      />
+                      <button onClick={handleChangeCode} disabled={changeCodeLoading} style={{
+                        padding: "9px 18px", fontSize: 13, fontWeight: 700, borderRadius: "var(--r-md)",
+                        background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer"
+                      }}>{changeCodeLoading ? "..." : "Guardar"}</button>
+                      <button onClick={() => { setChangingCode(false); setNewCode(''); setChangeCodeMsg(null); }} style={{
+                        padding: "9px 14px", fontSize: 13, fontWeight: 600, borderRadius: "var(--r-md)",
+                        background: "none", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"
+                      }}>Cancelar</button>
+                    </div>
+                    {changeCodeMsg && (
+                      <div style={{
+                        marginTop: 10, padding: "8px 12px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 600,
+                        background: changeCodeMsg.ok ? "var(--success-soft, #e8f5e9)" : "var(--error-soft, #fdecea)",
+                        color: changeCodeMsg.ok ? "var(--success, #2e7d32)" : "var(--error, #c62828)"
+                      }}>{changeCodeMsg.text}</div>
+                    )}
+                  </div>
+                )}
+              </Card>
+
+              <Card>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700 }}>Gestionar usuarios</h3>
+                  <button onClick={fetchUsers} style={{ fontSize: 12, color: "var(--primary)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Actualizar</button>
+                </div>
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Buscar por nombre o email..."
+                  style={{
+                    width: "100%", padding: "9px 12px", fontSize: 13, borderRadius: "var(--r-md)",
+                    border: "1.5px solid var(--border)", background: "var(--surface-2)", color: "var(--text)",
+                    marginBottom: 14, boxSizing: "border-box", outline: "none"
+                  }}
+                />
+                {usersLoading && <p className="muted" style={{ fontSize: 13, textAlign: "center", padding: "16px 0" }}>Cargando usuarios...</p>}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {users
+                    .filter(u => !search || u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()))
+                    .map(u => (
+                      <div key={u._id} style={{
+                        display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
+                        borderRadius: "var(--r-md)", background: "var(--surface-2)",
+                        border: "1px solid var(--border)", flexWrap: "wrap"
+                      }}>
+                        <div style={{ flex: 1, minWidth: 140 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 700 }}>{u.name}</div>
+                          <div className="muted" style={{ fontSize: 12 }}>{u.email}</div>
+                        </div>
+                        <select
+                          value={roleChanges[u._id] ?? u.role}
+                          onChange={e => setRoleChanges(prev => ({ ...prev, [u._id]: e.target.value }))}
+                          style={{
+                            padding: "6px 10px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
+                            border: "1.5px solid var(--border)", background: "var(--surface)", color: "var(--text)", cursor: "pointer"
+                          }}
+                        >
+                          {['Admin', 'Pastor', 'Treasurer', 'Ministry Leader', 'Staff', 'Member', 'Visitor'].map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => handleSaveRole(u._id)}
+                          disabled={savingRole[u._id] || !roleChanges[u._id] || roleChanges[u._id] === u.role}
+                          style={{
+                            padding: "6px 14px", fontSize: 12.5, fontWeight: 700, borderRadius: "var(--r-md)",
+                            background: savedRole[u._id] ? "var(--success, #2e7d32)" : "var(--primary)",
+                            color: "#fff", border: "none", cursor: "pointer",
+                            opacity: (!roleChanges[u._id] || roleChanges[u._id] === u.role) ? 0.35 : 1,
+                            minWidth: 72
+                          }}
+                        >{savingRole[u._id] ? "..." : savedRole[u._id] ? "✓ Listo" : "Guardar"}</button>
+                      </div>
+                    ))}
+                </div>
+              </Card>
+            </>
+          )}
         </div>
       )}
 

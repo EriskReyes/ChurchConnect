@@ -44,4 +44,6 @@ export const Icon = {
   Tag: (p) => <S {...p}><path d="M3 12V4h8l10 10-7 7Z"/><circle cx="7.5" cy="8.5" r="1.3"/></S>,
   Arrow: (p) => <S {...p}><path d="M5 12h14m0 0-6-6m6 6-6 6"/></S>,
   Menu: (p) => <S {...p}><path d="M3 7h18M3 12h18M3 17h18"/></S>,
+  Lock: (p) => <S {...p}><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></S>,
+  Shield: (p) => <S {...p}><path d="M12 3 4 6v6c0 5 4 9 8 10 4-1 8-5 8-10V6Z"/></S>,
 };
