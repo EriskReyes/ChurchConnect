@@ -135,7 +135,7 @@ function EventModal({ event, onClose }) {
 }
 
 // --- Modal: Neues Ereignis erstellen ---
-function NewEventModal({ open, onClose, onCreated }) {
+export function NewEventModal({ open, onClose, onCreated }) {
   const [form, setForm] = useState({
     title: '',                           // Titel des Ereignisses
     date: '2026-06-14',                 // Datum
@@ -152,7 +152,7 @@ function NewEventModal({ open, onClose, onCreated }) {
   const set = (key, val) => setForm(f => ({ ...f, [key]: val })); // Einzelnes Feld aktualisieren
 
   const handleCreate = async () => {
-    const token = localStorage.getItem('token'); // JWT-Token aus dem Speicher holen
+    const token = localStorage.getItem('authToken'); // JWT-Token aus dem Speicher holen
     if (!token) {
       setError('❌ Not authenticated. Please log in first and try again.');
       console.warn('No token found in localStorage. User needs to login.');
@@ -245,7 +245,7 @@ export default function Events({ role }) {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const token = localStorage.getItem('token'); // JWT-Token holen
+        const token = localStorage.getItem('authToken'); // JWT-Token holen
         const res = await fetch(API + '/api/events', { // GET-Anfrage an das Backend
           headers: { 'Authorization': 'Bearer ' + token } // Auth-Header
         });

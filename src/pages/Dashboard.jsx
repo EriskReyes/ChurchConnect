@@ -1,16 +1,31 @@
 import { useState } from 'react';
 import { Icon } from '../components/icons';
-import { Card, Stat, Badge, Button, Avatar, Progress, Segmented } from '../components/ui';
+import { Card, Stat, Badge, Button, Progress } from '../components/ui';
 import { BarChart } from '../components/charts';
 import DB from '../data';
 import { useTranslation } from '../hooks/useTranslation';
+import { NewEventModal } from './Events';
+import { NewSermonModal } from './Sermons';
 
 export default function Dashboard({ role, onNav }) {
   const { t } = useTranslation();
+  const [creatingEvent, setCreatingEvent] = useState(false);
+  const [creatingSermon, setCreatingSermon] = useState(false);
+  const [recentEvents, setRecentEvents] = useState(DB.events.filter(e => e.status === "Upcoming"));
+  const [recentSermons, setRecentSermons] = useState(DB.sermons.slice(0, 2));
+
   const SERIES_GRAD = {
     "Anchored": "linear-gradient(135deg,#3B5BA5,#1F4E5F)",
     "On Mission": "linear-gradient(135deg,#6E9B7E,#4A7C59)",
     "Stewardship": "linear-gradient(135deg,#B5742E,#8a5520)",
+  };
+
+  const handleEventCreated = (newEvent) => {
+    setRecentEvents(prev => [newEvent, ...prev]);
+  };
+
+  const handleSermonCreated = (newSermon) => {
+    setRecentSermons(prev => [newSermon, ...prev]);
   };
 
   return (
@@ -25,8 +40,8 @@ export default function Dashboard({ role, onNav }) {
               <p style={{ fontSize: 15, opacity: .92, marginTop: 6, lineHeight: 1.55 }}>"{t('dashboard.quote')}" — {t('dashboard.communityThriving')}</p>
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Button variant="soft" icon={Icon.Plus} style={{ background: "rgba(255,255,255,.18)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", minWidth: "fit-content" }}>{t('dashboard.newEvent')}</Button>
-              <Button style={{ background: "#fff", color: "var(--primary)", minWidth: "fit-content" }} icon={Icon.Mic}>{t('dashboard.uploadSermon')}</Button>
+              <Button variant="soft" icon={Icon.Plus} onClick={() => setCreatingEvent(true)} style={{ background: "rgba(255,255,255,.18)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", minWidth: "fit-content" }}>{t('dashboard.newEvent')}</Button>
+              <Button onClick={() => setCreatingSermon(true)} style={{ background: "#fff", color: "var(--primary)", minWidth: "fit-content" }} icon={Icon.Mic}>{t('dashboard.uploadSermon')}</Button>
             </div>
           </div>
         </Card>
@@ -46,23 +61,60 @@ export default function Dashboard({ role, onNav }) {
         </Card>
       </div>
 
-      <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('dashboard.upcomingEvents')}</h3>
-        {DB.events.filter(e => e.status === "Upcoming").slice(0, 3).map(e => (
-          <Card key={e.id} hover style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 16 }}>
-              <div style={{ width: 56, height: 56, borderRadius: 12, background: "var(--primary-soft)", color: "var(--primary)", display: "grid", placeItems: "center" }}>
-                <Icon.Calendar size={24} />
+      <div className="fade-up" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: "var(--gap)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t('dashboard.upcomingEvents')}</h3>
+            <button onClick={() => onNav?.('events')} style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", background: "none", border: "none", cursor: "pointer" }}>Ver todos →</button>
+          </div>
+          {recentEvents.slice(0, 3).map(e => (
+            <Card key={e._id || e.id} hover style={{ padding: 0, overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 16 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 12, background: "var(--primary-soft)", color: "var(--primary)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <Icon.Calendar size={22} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4 style={{ fontWeight: 600, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</h4>
+                  <p className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{e.date} · {e.time}</p>
+                </div>
+                <Badge tone="primary">{e.ministry}</Badge>
               </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ fontWeight: 600 }}>{e.title}</h4>
-                <p className="muted" style={{ fontSize: 13, marginTop: 2 }}>{e.date} at {e.time}</p>
+            </Card>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Recent Sermons</h3>
+            <button onClick={() => onNav?.('sermons')} style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", background: "none", border: "none", cursor: "pointer" }}>Ver todos →</button>
+          </div>
+          {recentSermons.slice(0, 3).map(s => (
+            <Card key={s._id || s.id} hover style={{ padding: 0, overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, padding: 16 }}>
+                <div style={{ width: 52, height: 52, borderRadius: 12, flexShrink: 0, background: SERIES_GRAD[s.series] || "linear-gradient(135deg,#7A4E9E,#5a3578)", display: "grid", placeItems: "center" }}>
+                  <Icon.Mic size={22} style={{ color: "#fff" }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h4 style={{ fontWeight: 600, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.title}</h4>
+                  <p className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{s.speaker} · {s.date}</p>
+                </div>
+                <Badge>{s.series}</Badge>
               </div>
-              <Badge tone="primary">{e.ministry}</Badge>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
+
+      <NewEventModal
+        open={creatingEvent}
+        onClose={() => setCreatingEvent(false)}
+        onCreated={handleEventCreated}
+      />
+      <NewSermonModal
+        open={creatingSermon}
+        onClose={() => setCreatingSermon(false)}
+        onSermonCreated={handleSermonCreated}
+      />
     </div>
   );
 }

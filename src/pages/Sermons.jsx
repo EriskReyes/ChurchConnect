@@ -24,7 +24,7 @@ function SermonArt({ s, h = 150, big }) {
   );
 }
 
-function NewSermonModal({ open, onClose, onSermonCreated }) {
+export function NewSermonModal({ open, onClose, onSermonCreated }) {
   const [title, setTitle] = useState("");
   const [speaker, setSpeaker] = useState("Pastor James Whitfield");
   const [series, setSeries] = useState("Anchored");
@@ -65,7 +65,8 @@ function NewSermonModal({ open, onClose, onSermonCreated }) {
 
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/sermons", {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/api/sermons`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
