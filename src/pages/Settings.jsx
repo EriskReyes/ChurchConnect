@@ -42,9 +42,9 @@ export default function Settings({ role }) {
 
   const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  // --- Admin panel state ---
-  const isAdmin = role === 'Admin';
+  // --- Admin panel state (sesión temporal, contraseña requerida siempre) ---
   const [adminCode, setAdminCode] = useState('');
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminMsg, setAdminMsg] = useState(null);
   const [adminLoading, setAdminLoading] = useState(false);
   const [users, setUsers] = useState([]);
@@ -59,9 +59,9 @@ export default function Settings({ role }) {
   const [changeCodeMsg, setChangeCodeMsg] = useState(null);
   const [changeCodeLoading, setChangeCodeLoading] = useState(false);
 
-  const jwtHeader = () => ({
+  const adminHeader = () => ({
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+    'x-admin-code': adminCode
   });
 
   const handleEnterAdmin = async () => {
@@ -69,17 +69,15 @@ export default function Settings({ role }) {
     setAdminLoading(true);
     setAdminMsg(null);
     try {
-      const res = await fetch(`${API}/api/admin/enter`, {
+      const res = await fetch(`${API}/api/admin/verify-code`, {
         method: 'POST',
-        headers: jwtHeader(),
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: adminCode.trim() })
       });
       const data = await res.json();
       if (!res.ok) { setAdminMsg(data.message); return; }
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setAdminCode('');
-      window.location.reload();
+      setAdminUnlocked(true);
+      fetchUsers();
     } catch { setAdminMsg('Error de conexión'); }
     finally { setAdminLoading(false); }
   };
@@ -87,15 +85,11 @@ export default function Settings({ role }) {
   const fetchUsers = async () => {
     setUsersLoading(true);
     try {
-      const res = await fetch(`${API}/api/admin/users`, { headers: jwtHeader() });
+      const res = await fetch(`${API}/api/admin/users`, { headers: adminHeader() });
       if (res.ok) setUsers(await res.json());
     } catch {}
     finally { setUsersLoading(false); }
   };
-
-  useEffect(() => {
-    if (tab === 'access' && isAdmin) fetchUsers();
-  }, [tab, isAdmin]);
 
   const handleSaveRole = async (userId) => {
     const newRole = roleChanges[userId];
@@ -104,7 +98,7 @@ export default function Settings({ role }) {
     try {
       const res = await fetch(`${API}/api/admin/users/${userId}/role`, {
         method: 'PATCH',
-        headers: jwtHeader(),
+        headers: adminHeader(),
         body: JSON.stringify({ role: newRole })
       });
       const data = await res.json();
@@ -127,11 +121,12 @@ export default function Settings({ role }) {
     try {
       const res = await fetch(`${API}/api/admin/change-code`, {
         method: 'POST',
-        headers: jwtHeader(),
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentCode: currentCodeInput.trim(), newCode: newCode.trim() })
       });
       const data = await res.json();
       if (!res.ok) { setChangeCodeMsg({ ok: false, text: data.message }); return; }
+      setAdminCode(newCode.trim());
       setCurrentCodeInput('');
       setNewCode('');
       setChangingCode(false);
@@ -139,6 +134,19 @@ export default function Settings({ role }) {
       setTimeout(() => setChangeCodeMsg(null), 3000);
     } catch { setChangeCodeMsg({ ok: false, text: 'Error de conexión' }); }
     finally { setChangeCodeLoading(false); }
+  };
+
+  const lockAdmin = () => {
+    setAdminUnlocked(false);
+    setAdminCode('');
+    setUsers([]);
+    setRoleChanges({});
+    setSearch('');
+    setChangingCode(false);
+    setCurrentCodeInput('');
+    setNewCode('');
+    setChangeCodeMsg(null);
+    setAdminMsg(null);
   };
 
   const [profileImage, setProfileImage] = useState(null);
@@ -349,7 +357,7 @@ export default function Settings({ role }) {
 
       {tab === "access" && (
         <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {!isAdmin ? (
+          {!adminUnlocked ? (
             <Card>
               <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--primary-soft)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
@@ -396,10 +404,16 @@ export default function Settings({ role }) {
                       <div className="muted" style={{ fontSize: 12 }}>{users.length} usuarios cargados</div>
                     </div>
                   </div>
-                  <button onClick={() => setChangingCode(v => !v)} style={{
-                    padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
-                    background: "none", color: "var(--primary)", border: "1.5px solid var(--primary)", cursor: "pointer"
-                  }}>Cambiar contraseña</button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => setChangingCode(v => !v)} style={{
+                      padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
+                      background: "none", color: "var(--primary)", border: "1.5px solid var(--primary)", cursor: "pointer"
+                    }}>Cambiar contraseña</button>
+                    <button onClick={lockAdmin} style={{
+                      padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
+                      background: "var(--surface-2)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"
+                    }}>Cerrar</button>
+                  </div>
                 </div>
 
                 {changingCode && (
