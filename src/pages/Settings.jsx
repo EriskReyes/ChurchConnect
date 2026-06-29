@@ -43,8 +43,8 @@ export default function Settings({ role }) {
   const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   // --- Admin panel state ---
+  const isAdmin = role === 'Admin';
   const [adminCode, setAdminCode] = useState('');
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminMsg, setAdminMsg] = useState(null);
   const [adminLoading, setAdminLoading] = useState(false);
   const [users, setUsers] = useState([]);
@@ -54,42 +54,48 @@ export default function Settings({ role }) {
   const [savedRole, setSavedRole] = useState({});
   const [search, setSearch] = useState('');
   const [changingCode, setChangingCode] = useState(false);
+  const [currentCodeInput, setCurrentCodeInput] = useState('');
   const [newCode, setNewCode] = useState('');
   const [changeCodeMsg, setChangeCodeMsg] = useState(null);
   const [changeCodeLoading, setChangeCodeLoading] = useState(false);
 
-  const authHeader = () => ({
+  const jwtHeader = () => ({
     'Content-Type': 'application/json',
-    'x-admin-code': adminCode
+    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
   });
 
-  const handleVerifyCode = async () => {
+  const handleEnterAdmin = async () => {
     if (!adminCode.trim()) return;
     setAdminLoading(true);
     setAdminMsg(null);
     try {
-      const res = await fetch(`${API}/api/admin/verify-code`, {
+      const res = await fetch(`${API}/api/admin/enter`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: jwtHeader(),
         body: JSON.stringify({ code: adminCode.trim() })
       });
       const data = await res.json();
-      if (!res.ok) { setAdminMsg({ ok: false, text: data.message }); return; }
-      setAdminUnlocked(true);
-      setAdminMsg(null);
-      fetchUsers();
-    } catch { setAdminMsg({ ok: false, text: 'Error de conexión' }); }
+      if (!res.ok) { setAdminMsg(data.message); return; }
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setAdminCode('');
+      window.location.reload();
+    } catch { setAdminMsg('Error de conexión'); }
     finally { setAdminLoading(false); }
   };
 
   const fetchUsers = async () => {
     setUsersLoading(true);
     try {
-      const res = await fetch(`${API}/api/admin/users`, { headers: authHeader() });
+      const res = await fetch(`${API}/api/admin/users`, { headers: jwtHeader() });
       if (res.ok) setUsers(await res.json());
     } catch {}
     finally { setUsersLoading(false); }
   };
+
+  useEffect(() => {
+    if (tab === 'access' && isAdmin) fetchUsers();
+  }, [tab, isAdmin]);
 
   const handleSaveRole = async (userId) => {
     const newRole = roleChanges[userId];
@@ -98,7 +104,7 @@ export default function Settings({ role }) {
     try {
       const res = await fetch(`${API}/api/admin/users/${userId}/role`, {
         method: 'PATCH',
-        headers: authHeader(),
+        headers: jwtHeader(),
         body: JSON.stringify({ role: newRole })
       });
       const data = await res.json();
@@ -112,8 +118,8 @@ export default function Settings({ role }) {
   };
 
   const handleChangeCode = async () => {
-    if (!newCode.trim() || newCode.trim().length < 6) {
-      setChangeCodeMsg({ ok: false, text: 'El nuevo código debe tener al menos 6 caracteres' });
+    if (!newCode.trim() || newCode.trim().length < 4) {
+      setChangeCodeMsg({ ok: false, text: 'Mínimo 4 caracteres' });
       return;
     }
     setChangeCodeLoading(true);
@@ -121,30 +127,18 @@ export default function Settings({ role }) {
     try {
       const res = await fetch(`${API}/api/admin/change-code`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('authToken')}` },
-        body: JSON.stringify({ currentCode: adminCode, newCode: newCode.trim() })
+        headers: jwtHeader(),
+        body: JSON.stringify({ currentCode: currentCodeInput.trim(), newCode: newCode.trim() })
       });
       const data = await res.json();
       if (!res.ok) { setChangeCodeMsg({ ok: false, text: data.message }); return; }
-      setAdminCode(newCode.trim());
+      setCurrentCodeInput('');
       setNewCode('');
       setChangingCode(false);
-      setChangeCodeMsg({ ok: true, text: '✓ Código actualizado' });
+      setChangeCodeMsg({ ok: true, text: '✓ Contraseña actualizada' });
       setTimeout(() => setChangeCodeMsg(null), 3000);
     } catch { setChangeCodeMsg({ ok: false, text: 'Error de conexión' }); }
     finally { setChangeCodeLoading(false); }
-  };
-
-  const lockAdmin = () => {
-    setAdminUnlocked(false);
-    setAdminCode('');
-    setUsers([]);
-    setRoleChanges({});
-    setSearch('');
-    setChangingCode(false);
-    setNewCode('');
-    setChangeCodeMsg(null);
-    setAdminMsg(null);
   };
 
   const [profileImage, setProfileImage] = useState(null);
@@ -172,9 +166,6 @@ export default function Settings({ role }) {
     reader.readAsDataURL(file);
   };
 
-  useEffect(() => {
-    if (tab !== 'access') lockAdmin();
-  }, [tab]);
 
   const tabs = ["profile", "church", "preferences", "languages", "access"];
   const tabLabels = {
@@ -358,29 +349,29 @@ export default function Settings({ role }) {
 
       {tab === "access" && (
         <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {!adminUnlocked ? (
+          {!isAdmin ? (
             <Card>
               <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--primary-soft)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
                   <Icon.Lock size={26} style={{ color: "var(--primary)" }} />
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Panel de Administración</h3>
-                <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>Ingresa el código de acceso para gestionar roles de usuarios.</p>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Acceso Admin</h3>
+                <p className="muted" style={{ fontSize: 13, marginBottom: 22 }}>Ingresa la contraseña para convertirte en Admin y gestionar usuarios.</p>
               </div>
-              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", maxWidth: 440, margin: "0 auto" }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", maxWidth: 420, margin: "0 auto" }}>
                 <input
                   type="password"
                   value={adminCode}
                   onChange={e => setAdminCode(e.target.value)}
-                  placeholder="Código de acceso"
-                  onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
+                  placeholder="Contraseña de admin"
+                  onKeyDown={e => e.key === 'Enter' && handleEnterAdmin()}
                   style={{
-                    flex: 1, minWidth: 200, padding: "11px 14px", fontSize: 14, fontWeight: 600,
+                    flex: 1, minWidth: 200, padding: "11px 14px", fontSize: 14,
                     borderRadius: "var(--r-md)", border: "1.5px solid var(--border)",
                     background: "var(--surface-2)", color: "var(--text)", outline: "none"
                   }}
                 />
-                <button onClick={handleVerifyCode} disabled={adminLoading || !adminCode.trim()} style={{
+                <button onClick={handleEnterAdmin} disabled={adminLoading || !adminCode.trim()} style={{
                   padding: "11px 24px", fontSize: 14, fontWeight: 700, borderRadius: "var(--r-md)",
                   background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer", opacity: adminLoading ? 0.7 : 1
                 }}>{adminLoading ? "..." : "Entrar"}</button>
@@ -389,7 +380,7 @@ export default function Settings({ role }) {
                 <div style={{
                   marginTop: 14, padding: "10px 14px", borderRadius: "var(--r-md)", fontSize: 13.5, fontWeight: 600,
                   background: "var(--error-soft, #fdecea)", color: "var(--error, #c62828)", textAlign: "center"
-                }}>{adminMsg.text}</div>
+                }}>{adminMsg}</div>
               )}
             </Card>
           ) : (
@@ -405,41 +396,46 @@ export default function Settings({ role }) {
                       <div className="muted" style={{ fontSize: 12 }}>{users.length} usuarios cargados</div>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => setChangingCode(v => !v)} style={{
-                      padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
-                      background: "none", color: "var(--primary)", border: "1.5px solid var(--primary)", cursor: "pointer"
-                    }}>Cambiar código</button>
-                    <button onClick={lockAdmin} style={{
-                      padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
-                      background: "var(--surface-2)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"
-                    }}>Salir</button>
-                  </div>
+                  <button onClick={() => setChangingCode(v => !v)} style={{
+                    padding: "7px 14px", fontSize: 12.5, fontWeight: 600, borderRadius: "var(--r-md)",
+                    background: "none", color: "var(--primary)", border: "1.5px solid var(--primary)", cursor: "pointer"
+                  }}>Cambiar contraseña</button>
                 </div>
 
                 {changingCode && (
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Nuevo código de acceso</div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Cambiar contraseña de admin</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <input
+                        type="password"
+                        value={currentCodeInput}
+                        onChange={e => setCurrentCodeInput(e.target.value)}
+                        placeholder="Contraseña actual"
+                        style={{
+                          padding: "9px 12px", fontSize: 13, borderRadius: "var(--r-md)",
+                          border: "1.5px solid var(--border)", background: "var(--surface-2)", color: "var(--text)", outline: "none"
+                        }}
+                      />
                       <input
                         type="password"
                         value={newCode}
                         onChange={e => setNewCode(e.target.value)}
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="Nueva contraseña (mínimo 4 caracteres)"
                         style={{
-                          flex: 1, minWidth: 180, padding: "9px 12px", fontSize: 13, fontWeight: 600,
-                          borderRadius: "var(--r-md)", border: "1.5px solid var(--border)",
-                          background: "var(--surface-2)", color: "var(--text)", outline: "none"
+                          padding: "9px 12px", fontSize: 13, borderRadius: "var(--r-md)",
+                          border: "1.5px solid var(--border)", background: "var(--surface-2)", color: "var(--text)", outline: "none"
                         }}
                       />
-                      <button onClick={handleChangeCode} disabled={changeCodeLoading} style={{
-                        padding: "9px 18px", fontSize: 13, fontWeight: 700, borderRadius: "var(--r-md)",
-                        background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer"
-                      }}>{changeCodeLoading ? "..." : "Guardar"}</button>
-                      <button onClick={() => { setChangingCode(false); setNewCode(''); setChangeCodeMsg(null); }} style={{
-                        padding: "9px 14px", fontSize: 13, fontWeight: 600, borderRadius: "var(--r-md)",
-                        background: "none", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"
-                      }}>Cancelar</button>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={handleChangeCode} disabled={changeCodeLoading} style={{
+                          padding: "9px 18px", fontSize: 13, fontWeight: 700, borderRadius: "var(--r-md)",
+                          background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer"
+                        }}>{changeCodeLoading ? "..." : "Guardar"}</button>
+                        <button onClick={() => { setChangingCode(false); setCurrentCodeInput(''); setNewCode(''); setChangeCodeMsg(null); }} style={{
+                          padding: "9px 14px", fontSize: 13, fontWeight: 600, borderRadius: "var(--r-md)",
+                          background: "none", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"
+                        }}>Cancelar</button>
+                      </div>
                     </div>
                     {changeCodeMsg && (
                       <div style={{
