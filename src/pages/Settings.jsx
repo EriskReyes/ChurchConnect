@@ -53,6 +53,10 @@ export default function Settings({ role }) {
   const [savingRole, setSavingRole] = useState({});
   const [savedRole, setSavedRole] = useState({});
   const [search, setSearch] = useState('');
+  const [confirmAdmin, setConfirmAdmin] = useState(null); // { userId, role }
+  const [confirmCode, setConfirmCode] = useState('');
+  const [confirmMsg, setConfirmMsg] = useState(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [changingCode, setChangingCode] = useState(false);
   const [currentCodeInput, setCurrentCodeInput] = useState('');
   const [newCode, setNewCode] = useState('');
@@ -91,14 +95,26 @@ export default function Settings({ role }) {
     finally { setUsersLoading(false); }
   };
 
-  const handleSaveRole = async (userId) => {
+  const handleSaveRole = (userId) => {
     const newRole = roleChanges[userId];
     if (!newRole) return;
+    if (newRole === 'Admin') {
+      setConfirmAdmin({ userId, role: newRole });
+      setConfirmCode('');
+      setConfirmMsg(null);
+      return;
+    }
+    applyRoleChange(userId, newRole);
+  };
+
+  const applyRoleChange = async (userId, newRole, codeOverride) => {
     setSavingRole(prev => ({ ...prev, [userId]: true }));
     try {
+      const headers = { ...adminHeader() };
+      if (codeOverride) headers['x-admin-code'] = codeOverride;
       const res = await fetch(`${API}/api/admin/users/${userId}/role`, {
         method: 'PATCH',
-        headers: adminHeader(),
+        headers,
         body: JSON.stringify({ role: newRole })
       });
       const data = await res.json();
@@ -109,6 +125,25 @@ export default function Settings({ role }) {
       setTimeout(() => setSavedRole(prev => { const n = { ...prev }; delete n[userId]; return n; }), 2000);
     } catch { alert('Error al guardar'); }
     finally { setSavingRole(prev => ({ ...prev, [userId]: false })); }
+  };
+
+  const handleConfirmAdmin = async () => {
+    if (!confirmCode.trim()) return;
+    setConfirmLoading(true);
+    setConfirmMsg(null);
+    try {
+      const res = await fetch(`${API}/api/admin/verify-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: confirmCode.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) { setConfirmMsg(data.message); return; }
+      await applyRoleChange(confirmAdmin.userId, confirmAdmin.role, confirmCode.trim());
+      setConfirmAdmin(null);
+      setConfirmCode('');
+    } catch { setConfirmMsg('Error de conexión'); }
+    finally { setConfirmLoading(false); }
   };
 
   const handleChangeCode = async () => {
@@ -520,6 +555,68 @@ export default function Settings({ role }) {
               </Card>
             </>
           )}
+        </div>
+      )}
+
+      {confirmAdmin && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20
+        }}>
+          <div style={{
+            background: "var(--surface)", borderRadius: "var(--r-lg)", padding: 28,
+            width: "100%", maxWidth: 380, boxShadow: "0 8px 32px rgba(0,0,0,0.25)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--primary-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Icon.Shield size={20} style={{ color: "var(--primary)" }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>Confirmar rol Admin</div>
+                <div className="muted" style={{ fontSize: 12.5 }}>Se requiere la contraseña de admin</div>
+              </div>
+            </div>
+            <p style={{ fontSize: 13.5, marginBottom: 16, color: "var(--text-muted)", lineHeight: 1.5 }}>
+              Estás asignando el rol <strong style={{ color: "var(--primary)" }}>Admin</strong> a este usuario. Ingresa la contraseña para confirmar.
+            </p>
+            <input
+              type="password"
+              value={confirmCode}
+              onChange={e => setConfirmCode(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleConfirmAdmin()}
+              placeholder="Contraseña de admin"
+              autoFocus
+              style={{
+                width: "100%", padding: "11px 14px", fontSize: 14, borderRadius: "var(--r-md)",
+                border: "1.5px solid var(--border)", background: "var(--surface-2)", color: "var(--text)",
+                outline: "none", boxSizing: "border-box", marginBottom: 10
+              }}
+            />
+            {confirmMsg && (
+              <div style={{
+                padding: "8px 12px", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 600,
+                background: "var(--error-soft, #fdecea)", color: "var(--error, #c62828)", marginBottom: 10
+              }}>{confirmMsg}</div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={handleConfirmAdmin}
+                disabled={confirmLoading || !confirmCode.trim()}
+                style={{
+                  flex: 1, padding: "10px", fontSize: 13.5, fontWeight: 700, borderRadius: "var(--r-md)",
+                  background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer",
+                  opacity: confirmLoading ? 0.7 : 1
+                }}
+              >{confirmLoading ? "Verificando..." : "Confirmar"}</button>
+              <button
+                onClick={() => { setConfirmAdmin(null); setConfirmCode(''); setConfirmMsg(null); }}
+                style={{
+                  flex: 1, padding: "10px", fontSize: 13.5, fontWeight: 600, borderRadius: "var(--r-md)",
+                  background: "var(--surface-2)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer"
+                }}
+              >Cancelar</button>
+            </div>
+          </div>
         </div>
       )}
 
