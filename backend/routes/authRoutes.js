@@ -240,6 +240,19 @@ router.post('/upgrade-role', protect, async (req, res) => {
   }
 });
 
+// Restaurar rol original al cerrar sesión
+router.post('/restore-role', protect, async (req, res) => {
+  try {
+    const { role } = req.body;
+    const allowed = ['Pastor', 'Treasurer', 'Ministry Leader', 'Staff', 'Member', 'Visitor'];
+    if (!allowed.includes(role)) return res.status(400).json({ message: 'Rol inválido' });
+    await User.findByIdAndUpdate(req.userId, { role });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Delete account
 router.delete('/delete-account', protect, async (req, res) => {
   try {
