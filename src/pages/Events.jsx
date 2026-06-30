@@ -1,17 +1,23 @@
-import { useState, useEffect } from 'react'; // Hooks für Zustand und Effekte
-import { Icon } from '../components/icons'; // Icons des Projekts
-import { Card, Badge, Button, Avatar, Progress, Segmented, Modal, Field, Input, Select, Textarea, SearchInput, IconButton } from '../components/ui'; // UI-Komponenten
-import DB from '../data'; // Hartcodierte Daten als Fallback
-import { useTranslation } from '../hooks/useTranslation'; // Übersetzungen
+import { useState, useEffect } from 'react';
+import { Icon } from '../components/icons';
+import { Card, Badge, Button, Avatar, Progress, Segmented, Modal, Field, Input, Select, Textarea, SearchInput, IconButton } from '../components/ui';
+import EventDetail from '../components/EventDetail';
+import DB from '../data';
+import { useTranslation } from '../hooks/useTranslation';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'; // Backend-URL aus der .env-Datei
 
 const STATUS_TONE = { Upcoming: "primary", Planning: "warn", Past: "neutral" }; // Farben nach Status
-const fmtDate = d => new Date(d + "T00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); // Datum formatieren
+const fmtDate = d => {
+  if (!d) return '—';
+  const date = new Date(String(d).includes('T') ? d : d + 'T00:00');
+  return isNaN(date) ? '—' : date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+};
 
 // --- Ereigniszeile in der Liste ---
 function EventRow({ e, onOpen }) {
-  const day = new Date((e.date || "2026-06-01") + "T00:00"); // String in Date umwandeln
+  const raw = e.date || "2026-06-01";
+  const day = new Date(String(raw).includes('T') ? raw : raw + 'T00:00');
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   return (
       <Card hover onClick={() => onOpen(e)} style={{ padding: 0, overflow: "hidden" }}>
@@ -98,39 +104,111 @@ function CalendarView({ events, onOpen }) {
   );
 }
 
-// --- Detailansicht eines Ereignisses ---
-function EventModal({ event, onClose }) {
-  if (!event) return null;
+// --- Modal: Registrar asistentes ---
+function RegisterAttendeesModal({ event, open, onClose, onSaved }) {
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const members = DB.members.filter(m =>
+    !search || m.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const toggle = (id) =>
+    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  const handleSave = async () => {
+    if (!selected.length) return;
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const newCount = (event.attendees || 0) + selected.length;
+      const id = event._id || event.id;
+      if (id && !String(id).startsWith('ev')) {
+        await fetch(`${API}/api/events/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ attendees: newCount })
+        });
+      }
+      onSaved(selected.length);
+      setDone(true);
+      setTimeout(() => { setDone(false); setSelected([]); setSearch(''); onClose(); }, 1400);
+    } catch {
+      onSaved(selected.length);
+      setDone(true);
+      setTimeout(() => { setDone(false); setSelected([]); setSearch(''); onClose(); }, 1400);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) return null;
   return (
-      <Modal open={!!event} onClose={onClose} title={event.title} width={560}
-             footer={<><Button variant="outline" onClick={onClose}>Close</Button><Button icon={Icon.Check}>Register attendees</Button></>}>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
-          <Badge tone={STATUS_TONE[event.status]} dot>{event.status}</Badge>
-          <Badge tone="primary">{event.ministry}</Badge>
-          {event.recurring && <Badge tone="sage">Recurring weekly</Badge>}
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "var(--surface)", borderRadius: "var(--r-lg)", width: "100%", maxWidth: 440, maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
+        <div style={{ padding: "20px 20px 12px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2 }}>Registrar asistentes</div>
+          <div className="muted" style={{ fontSize: 12.5 }}>{event.title} · {selected.length} seleccionados</div>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar miembro..."
+            style={{ marginTop: 12, width: "100%", padding: "9px 12px", fontSize: 13, borderRadius: "var(--r-md)", border: "1.5px solid var(--border)", background: "var(--surface-2)", color: "var(--text)", outline: "none", boxSizing: "border-box" }}
+          />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-          {[[Icon.Calendar, "Date", fmtDate(event.date)], [Icon.Clock, "Time", event.time], [Icon.Pin, "Location", event.location], [Icon.Cross, "Led by", event.lead]].map(([Ic, l, v]) => (
-              <div key={l} style={{ display: "flex", gap: 11, alignItems: "center" }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--surface-3)", color: "var(--primary)", display: "grid", placeItems: "center" }}><Ic size={18} /></div>
-                <div><div className="faint" style={{ fontSize: 11.5 }}>{l}</div><div style={{ fontSize: 13.5, fontWeight: 600 }}>{v}</div></div>
-              </div>
-          ))}
+        <div style={{ flex: 1, overflowY: "auto", padding: "10px 12px" }}>
+          {members.map(m => {
+            const on = selected.includes(m.id);
+            return (
+              <button key={m.id} onClick={() => toggle(m.id)} style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 10px",
+                borderRadius: "var(--r-md)", border: "none", background: on ? "var(--primary-soft)" : "transparent",
+                cursor: "pointer", marginBottom: 2, textAlign: "left"
+              }}>
+                <Avatar name={m.name} size={36} src={m.avatar} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>{m.name}</div>
+                  <div className="muted" style={{ fontSize: 12 }}>{m.role}</div>
+                </div>
+                <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${on ? "var(--primary)" : "var(--border-strong)"}`, background: on ? "var(--primary)" : "transparent", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  {on && <Icon.Check size={12} style={{ color: "#fff" }} />}
+                </div>
+              </button>
+            );
+          })}
         </div>
-        <div style={{ background: "var(--surface-2)", borderRadius: 14, padding: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontSize: 13.5, fontWeight: 600 }}>Registration</span>
-            <span className="muted" style={{ fontSize: 13 }}>{event.attendees} of {event.capacity} spots</span>
-          </div>
-          <Progress value={(event.attendees / event.capacity) * 100} />
-          <div style={{ display: "flex", marginTop: 14, alignItems: "center" }}>
-            {DB.members.slice(0, 6).map((m, i) => (
-                <div key={m.id} style={{ marginLeft: i ? -10 : 0 }}><Avatar name={m.name} size={32} ring /></div>
-            ))}
-            <span className="muted" style={{ fontSize: 12.5, marginLeft: 12 }}>+{event.attendees - 6} others attending</span>
-          </div>
+        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--border)", display: "flex", gap: 8 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "10px", fontSize: 13.5, fontWeight: 600, borderRadius: "var(--r-md)", background: "var(--surface-2)", color: "var(--text-muted)", border: "1px solid var(--border)", cursor: "pointer" }}>Cancelar</button>
+          <button onClick={handleSave} disabled={!selected.length || saving} style={{
+            flex: 2, padding: "10px", fontSize: 13.5, fontWeight: 700, borderRadius: "var(--r-md)",
+            background: done ? "var(--success, #2e7d32)" : "var(--primary)", color: "#fff", border: "none",
+            cursor: "pointer", opacity: !selected.length ? 0.4 : 1, transition: "background 0.3s"
+          }}>
+            {done ? "✓ Registrados" : saving ? "Guardando..." : `Registrar ${selected.length || ''} asistente${selected.length !== 1 ? 's' : ''}`}
+          </button>
         </div>
-      </Modal>
+      </div>
+    </div>
+  );
+}
+
+// --- Detailansicht eines Ereignisses ---
+function EventModal({ event, onClose, onAttendeesUpdated }) {
+  const [localEvent, setLocalEvent] = useState(event);
+  useEffect(() => { setLocalEvent(event); }, [event]);
+  if (!localEvent) return null;
+  return (
+    <Modal open={!!localEvent} onClose={onClose} title={localEvent.title} width={580}
+           footer={<Button variant="outline" onClick={onClose}>Cerrar</Button>}>
+      <EventDetail
+        event={localEvent}
+        onAttendeesUpdated={(updated) => {
+          setLocalEvent(updated);
+          if (onAttendeesUpdated) onAttendeesUpdated(updated._id || updated.id, updated);
+        }}
+      />
+    </Modal>
   );
 }
 
@@ -298,7 +376,9 @@ export default function Events({ role }) {
             ? <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 12 }}>{list.map(e => <EventRow key={e._id || e.id} e={e} onOpen={setOpen} />)}</div>
             : <div className="fade-up"><CalendarView events={events} onOpen={setOpen} /></div>}
 
-        <EventModal event={open} onClose={() => setOpen(null)} />
+        <EventModal event={open} onClose={() => setOpen(null)} onAttendeesUpdated={(id, updated) => {
+          setEvents(prev => prev.map(e => (e._id || e.id) === id ? updated : e));
+        }} />
         <NewEventModal open={creating} onClose={() => setCreating(false)} onCreated={handleCreated} />
       </div>
   );

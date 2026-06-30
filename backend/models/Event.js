@@ -18,7 +18,7 @@ const eventSchema = new mongoose.Schema({
   lead: String,
   leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member' },
   church: { type: mongoose.Schema.Types.ObjectId, ref: 'Church' },
-  attendeesList: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Member' }],
+  attendeesList: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
