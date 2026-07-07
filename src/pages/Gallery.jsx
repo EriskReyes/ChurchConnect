@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Icon } from '../components/icons';
 import { Card, Badge, Button, Modal, Field, Input, Textarea } from '../components/ui';
 import DB from '../data';
+import { compressIfImage, readAsDataURL, MAX_5MB } from '../utils/imageCompression';
 
 export default function Gallery({ role, onNav }) {
   const [gallery, setGallery] = useState(DB.gallery);
@@ -17,6 +18,7 @@ export default function Gallery({ role, onNav }) {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [compressing, setCompressing] = useState(false);
 
   useEffect(() => {
     fetchGallery();
@@ -73,31 +75,34 @@ export default function Gallery({ role, onNav }) {
     setUploadImg(false);
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
-    const maxSize = uploadType === "video" ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
-    const newFiles = [];
+    if (!files.length) return;
 
-    files.forEach(file => {
-      if (file.size > maxSize) {
-        alert(`${file.name} es demasiado grande. Máximo: ${uploadType === "video" ? "50MB" : "5MB"}`);
-        return;
-      }
+    const isVideo = uploadType === "video";
+    const maxSize = isVideo ? 50 * 1024 * 1024 : MAX_5MB;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        newFiles.push({
-          name: file.name.replace(/\.[^/.]+$/, ""),
-          url: event.target.result,
-          type: uploadType
-        });
+    setCompressing(true);
+    try {
+      const results = await Promise.all(files.map(async (file) => {
+        // Compress images before size check
+        const processed = isVideo ? file : await compressIfImage(file);
 
-        if (newFiles.length === files.length) {
-          setSelectedFiles([...selectedFiles, ...newFiles]);
+        // Safety net: reject if still too large after compression
+        if (processed.size > maxSize) {
+          alert(`${file.name} es demasiado grande. Máximo: ${isVideo ? "50MB" : "5MB"}`);
+          return null;
         }
-      };
-      reader.readAsDataURL(file);
-    });
+
+        const url = await readAsDataURL(processed);
+        return { name: file.name.replace(/\.[^/.]+$/, ""), url, type: uploadType };
+      }));
+
+      const valid = results.filter(Boolean);
+      if (valid.length) setSelectedFiles(prev => [...prev, ...valid]);
+    } finally {
+      setCompressing(false);
+    }
   };
 
   const handleDeleteImage = (id) => {
@@ -287,12 +292,12 @@ export default function Gallery({ role, onNav }) {
             </Field>
 
             <Field label={`Selecciona ${uploadType === "video" ? "videos" : "fotos"} (puedes seleccionar varias)`}>
-              <label style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, border: "2px dashed var(--border)", borderRadius: 11, cursor: "pointer", background: "var(--surface-2)" }} onMouseEnter={e => e.currentTarget.style.borderColor = "var(--primary)"} onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
-                <input type="file" accept={uploadType === "video" ? "video/*" : "image/*"} onChange={handleFileSelect} multiple style={{ display: "none" }} />
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 24, border: "2px dashed var(--border)", borderRadius: 11, cursor: compressing ? "not-allowed" : "pointer", background: "var(--surface-2)", opacity: compressing ? 0.7 : 1 }} onMouseEnter={e => { if (!compressing) e.currentTarget.style.borderColor = "var(--primary)"; }} onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}>
+                <input type="file" accept={uploadType === "video" ? "video/*" : "image/*"} onChange={handleFileSelect} multiple style={{ display: "none" }} disabled={compressing} />
                 <div style={{ textAlign: "center" }}>
                   {uploadType === "video" ? <Icon.Play size={32} style={{ color: "var(--primary)", marginBottom: 8 }} /> : <Icon.Image size={32} style={{ color: "var(--primary)", marginBottom: 8 }} />}
-                  <div style={{ fontWeight: 600 }}>Click o arrastra múltiples archivos</div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Puedes seleccionar varios a la vez</div>
+                  <div style={{ fontWeight: 600 }}>{compressing ? "Optimizando imagen..." : "Click o arrastra múltiples archivos"}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{compressing ? "Por favor espera" : "Puedes seleccionar varios a la vez"}</div>
                 </div>
               </label>
             </Field>

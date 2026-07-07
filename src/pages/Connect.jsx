@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { compressIfImage, readAsDataURL, MAX_5MB } from '../utils/imageCompression';
 import { Icon } from '../components/icons';
 import { Card, Badge, Button, Avatar, SearchInput, Field, Input, Textarea, Select, Modal, IconButton, Menu } from '../components/ui';
 import DB from '../data';
@@ -65,16 +66,18 @@ function Ministries({ role, onMinistrySelect }) {
     setUploadingMinistryPhoto(false);
   };
 
-  const handleMinistryPhotoFileSelect = (e) => {
+  const handleMinistryPhotoFileSelect = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setMinistryPhotoUrl(event.target.result);
-      if (!ministryPhotoName) setMinistryPhotoName(file.name.replace(/\.[^/.]+$/, ""));
-    };
-    reader.readAsDataURL(file);
+    const compressed = await compressIfImage(file);
+    if (compressed.size > MAX_5MB) {
+      alert("La imagen es muy grande. Máximo 5 MB.");
+      return;
+    }
+    const url = await readAsDataURL(compressed);
+    setMinistryPhotoUrl(url);
+    if (!ministryPhotoName) setMinistryPhotoName(file.name.replace(/\.[^/.]+$/, ""));
   };
 
   return (
@@ -527,16 +530,22 @@ export default function Connect({ role, onNav }) {
     setUploadImg(false);
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setSelectedFiles(prev => [...prev, { name: file.name.replace(/\.[^/.]+$/, ""), url: event.target.result }]);
-      };
-      reader.readAsDataURL(file);
-    });
+
+    const results = await Promise.all(files.map(async (file) => {
+      const compressed = await compressIfImage(file);
+      if (compressed.size > MAX_5MB) {
+        alert(`${file.name} es demasiado grande. Máximo 5 MB.`);
+        return null;
+      }
+      const url = await readAsDataURL(compressed);
+      return { name: file.name.replace(/\.[^/.]+$/, ""), url };
+    }));
+
+    const valid = results.filter(Boolean);
+    if (valid.length) setSelectedFiles(prev => [...prev, ...valid]);
     e.target.value = "";
   };
 

@@ -1,4 +1,5 @@
 import { useState, useContext, useRef, useEffect } from 'react';
+import { compressIfImage, readAsDataURL, MAX_4MB } from '../utils/imageCompression';
 import { Icon } from '../components/icons';
 import { Card, Button, Avatar, Field, Input, Textarea } from '../components/ui';
 import { useTranslation } from '../hooks/useTranslation';
@@ -193,20 +194,19 @@ export default function Settings({ role }) {
   const [tempProfileData, setTempProfileData] = useState(profileData);
   const [tempChurchData, setTempChurchData] = useState(churchData);
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 4 * 1024 * 1024) {
+    const compressed = await compressIfImage(file);
+
+    if (compressed.size > MAX_4MB) {
       alert("La imagen es muy grande. Máximo 4 MB.");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setProfileImage(event.target?.result);
-    };
-    reader.readAsDataURL(file);
+    const url = await readAsDataURL(compressed);
+    setProfileImage(url);
   };
 
 

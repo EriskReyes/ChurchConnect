@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { compressIfImage, readAsDataURL } from '../utils/imageCompression';
 import { Icon } from '../components/icons';
 import { Card, Button, Modal, Field, Input, Select, Textarea } from '../components/ui';
 import DB from '../data';
@@ -67,14 +68,12 @@ function EditFlyerModal({ open, onClose, onFlyerSaved, flyer }) {
   const [loading, setLoading] = useState(false);
   const imageInputRef = useRef(null);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImage(event.target?.result);
-    };
-    reader.readAsDataURL(file);
+    const compressed = await compressIfImage(file);
+    const url = await readAsDataURL(compressed);
+    setImage(url);
   };
 
   const handleSubmit = async () => {
