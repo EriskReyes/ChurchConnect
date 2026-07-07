@@ -149,7 +149,7 @@ function App() {
         </>
       )}
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", height: "100%" }}>
-        <Topbar page={page} role={role} onRole={setRole} onToggleSidebar={isMobile ? () => setSidebarOpen(s => !s) : () => setCollapsed(c => !c)} dark={t.dark} onToggleDark={() => setTweak("dark", !t.dark)} onLogout={handleLogout} isMobile={isMobile} />
+        <Topbar page={page} role={role} onRole={setRole} onToggleSidebar={isMobile ? () => setSidebarOpen(s => !s) : () => setTweak("sidebar", t.sidebar === "icons" ? "expanded" : "icons")} dark={t.dark} onToggleDark={() => setTweak("dark", !t.dark)} onLogout={handleLogout} isMobile={isMobile} />
         <main className="main-scroll scroll-y" style={{ flex: 1, padding: "26px 28px 60px" }}>
           <div style={{ maxWidth: 1320, margin: "0 auto" }} key={page}>
             {PageComp ? <PageComp role={role} onNav={nav} /> : <Placeholder page={page} onNav={nav} />}
