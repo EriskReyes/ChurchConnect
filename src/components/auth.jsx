@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Icon } from './icons';
 import { Button, Input, Field } from './ui';
 import { useTranslation } from '../hooks/useTranslation';
@@ -42,25 +42,68 @@ export function AuthScreen({ onEnter }) {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showChurchLogin, setShowChurchLogin] = useState(false);
-  const [churchFormData, setChurchFormData] = useState({ email: "", code: "" });
+  const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({ name: "", email: "", password: "", role: "Member" });
   const reg = mode === "register";
   const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const googleBtnRef = useRef(null);
+  const callbackRef = useRef(null);
+
+  const handleGoogleCallback = async (response) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(API + '/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Google sign-in failed');
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      onEnter(data.user);
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed');
+      setLoading(false);
+    }
+  };
+
+  // Keep callbackRef current so Google's callback always uses latest closure
+  callbackRef.current = handleGoogleCallback;
 
   useEffect(() => {
-    // Cargar script de Apple Sign In
-    const script = document.createElement('script');
-    script.src = 'https://appleid.cdn-apple.com/appleauth/static/jslib/appleid.auth.js';
-    script.async = true;
-    document.body.appendChild(script);
+    if (!GOOGLE_CLIENT_ID) return;
 
-    return () => {
-      if (script.parentNode) {
-        document.body.removeChild(script);
+    const initAndRender = () => {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (res) => callbackRef.current(res),
+      });
+      if (googleBtnRef.current) {
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: 368,
+          text: 'continue_with',
+          logo_alignment: 'left',
+        });
       }
     };
-  }, []);
+
+    if (window.google?.accounts) {
+      initAndRender();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initAndRender;
+      document.head.appendChild(script);
+      return () => { if (document.head.contains(script)) document.head.removeChild(script); };
+    }
+  }, [GOOGLE_CLIENT_ID]);
 
   const handleAuth = async () => {
     if (!formData.email || !formData.password || (reg && !formData.name)) {
@@ -69,13 +112,12 @@ export function AuthScreen({ onEnter }) {
     }
     setLoading(true);
     setError("");
+    setSuccess("");
     try {
       const endpoint = reg ? '/api/auth/register' : '/api/auth/login';
       const payload = reg
         ? { name: formData.name, email: formData.email, password: formData.password, role: formData.role }
         : { email: formData.email, password: formData.password };
-
-      console.log("Attempting auth at:", API + endpoint, "payload:", payload);
 
       const res = await fetch(API + endpoint, {
         method: 'POST',
@@ -84,49 +126,30 @@ export function AuthScreen({ onEnter }) {
       });
 
       const data = await res.json();
-      console.log("Auth response:", res.status, data);
+      if (!res.ok) throw new Error(data.message || `Authentication failed: ${res.status}`);
 
-      if (!res.ok) {
-        throw new Error(data.message || `Authentication failed: ${res.status}`);
+      // Register: account pending approval — don't log in
+      if (data.pending) {
+        setSuccess(data.message || '⏳ Tu cuenta está pendiente de aprobación.');
+        setMode('login');
+        setFormData({ name: "", email: formData.email, password: "", role: "Member" });
+        setLoading(false);
+        return;
       }
 
-      if (!data.token) {
-        throw new Error("No token received from server");
-      }
+      if (!data.token) throw new Error("No token received from server");
 
-      console.log("Saving token to localStorage:", data.token.substring(0, 50));
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Safely save to localStorage with error handling
-      try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('authToken', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          console.log("Token saved successfully");
-        } else {
-          throw new Error("localStorage is not available");
-        }
-      } catch (storageError) {
-        console.error("localStorage error:", storageError);
-        if (storageError.name === 'QuotaExceededError') {
-          setError("Storage quota exceeded. Please clear your browser cache.");
-          setLoading(false);
-          return;
-        }
-        // Continue even if localStorage fails - data is in memory
-        console.warn("Continuing without localStorage");
-      }
-
-      console.log("Calling onEnter with user:", data.user);
-      // Delay slightly to ensure state updates
-      setTimeout(() => {
-        onEnter(data.user);
-      }, 100);
+      setTimeout(() => { onEnter(data.user); }, 100);
     } catch (err) {
-      console.error("Auth error:", err);
       setError(err.message || "An error occurred");
       setLoading(false);
     }
   };
+
+
   return (
     <div style={{ height: "100svh", minHeight: "100vh", display: "flex", background: "var(--bg)" }}>
       <div className="brand-side" style={{ display: "flex", flex: 1 }}><Brandside /></div>
@@ -140,21 +163,22 @@ export function AuthScreen({ onEnter }) {
           </div>
 
           <h2 style={{ fontSize: 26, fontWeight: 700 }}>{reg ? "Join the community" : "Welcome back"}</h2>
-          <p className="muted" style={{ fontSize: 14, marginTop: 6, marginBottom: 26 }}>{reg ? "Create your account to get connected." : `Sign in to your ChurchConnect account.`}</p>
+          <p className="muted" style={{ fontSize: 14, marginTop: 6, marginBottom: 26 }}>{reg ? "Create your account to get connected." : "Sign in to your ChurchConnect account."}</p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {error && <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--error-soft, #fee)', color: 'var(--error, #c00)', fontSize: 13 }}>{error}</div>}
+            {success && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#e8f5e9', color: '#2e7d32', fontSize: 13, lineHeight: 1.5 }}>{success}</div>}
             {reg && <Field label={t('auth.name')}><Input placeholder="Your name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></Field>}
-            <Field label={t('auth.email')}><Input type="email" placeholder="you@example.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} /></Field>
+            <Field label={t('auth.email')}><Input type="email" placeholder="you@example.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} onKeyDown={e => e.key === 'Enter' && handleAuth()} /></Field>
             <Field label={t('auth.password')}>
               <div style={{ position: "relative" }}>
-                <Input type={show ? "text" : "password"} placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} style={{ paddingRight: 44 }} />
+                <Input type={show ? "text" : "password"} placeholder="••••••••" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} style={{ paddingRight: 44 }} onKeyDown={e => e.key === 'Enter' && handleAuth()} />
                 <button onClick={() => setShow(s => !s)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", border: "none", background: "none", color: "var(--text-faint)", display: "grid", padding: 4 }}><Icon.Eye size={18} /></button>
               </div>
             </Field>
             {reg && <Field label={t('auth.selectRole')}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {["Member", "Ministry Leader", "Staff", "Visitor"].map((r, i) => (
+                {["Member", "Ministry Leader", "Staff", "Visitor"].map(r => (
                   <label key={r} style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 13px", borderRadius: 10, border: "1px solid var(--border-strong)", fontSize: 13, fontWeight: 500, cursor: "pointer", background: formData.role === r ? "var(--primary-soft)" : "var(--surface-2)", color: formData.role === r ? "var(--on-primary-soft)" : "var(--text)" }}>
                     <input type="radio" name="role" checked={formData.role === r} onChange={() => setFormData({...formData, role: r})} style={{ accentColor: "var(--primary)" }} />{r}
                   </label>
@@ -167,87 +191,17 @@ export function AuthScreen({ onEnter }) {
               <a style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)", cursor: "pointer" }}>Forgot password?</a>
             </div>}
 
-            <Button size="lg" onClick={handleAuth} disabled={loading} style={{ width: "100%", marginTop: 4 }} iconRight={Icon.Arrow}>{loading ? (reg ? "Creating..." : "Signing in...") : (reg ? "Create account" : "Sign in")}</Button>
+            <Button size="lg" onClick={handleAuth} disabled={loading} style={{ width: "100%", marginTop: 4 }} iconRight={Icon.Arrow}>
+              {loading ? (reg ? "Creating..." : "Signing in...") : (reg ? "Create account" : "Sign in")}
+            </Button>
 
             <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "4px 0" }}>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} /><span className="faint" style={{ fontSize: 12 }}>or continue with</span><div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              <span className="faint" style={{ fontSize: 12 }}>or continue with</span>
+              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
             </div>
-            {!showChurchLogin ? (
-              <div style={{ display: "flex", gap: 10 }}>
-                <button key="google" onClick={() => {
-                  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}&redirect_uri=${window.location.origin}/auth/google&response_type=id_token&scope=openid email profile&nonce=${Date.now()}`;
-                }} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>Google</button>
 
-                <button key="apple" onClick={async () => {
-                  if (!window.AppleID) {
-                    setError("Apple Sign In SDK not loaded. Please try again.");
-                    return;
-                  }
-                  try {
-                    setLoading(true);
-                    const response = await window.AppleID.auth.signIn();
-                    const { identityToken, user } = response.authorization;
-
-                    const res = await fetch(API + '/api/auth/apple', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        identityToken,
-                        user: {
-                          name: user?.name,
-                          email: user?.email
-                        }
-                      })
-                    });
-
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.message || 'Apple login failed');
-
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    onEnter(data.user);
-                  } catch (err) {
-                    setError(err.message || "Apple Sign In failed");
-                  } finally {
-                    setLoading(false);
-                  }
-                }} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13.5, fontWeight: 600, color: "var(--text)" }} disabled={loading}>Apple</button>
-
-                <button key="church" onClick={() => setShowChurchLogin(true)} style={{ flex: 1, padding: "11px", borderRadius: 11, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13.5, fontWeight: 600, color: "var(--text)" }}>Church ID</button>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <Field label="Email"><Input type="email" placeholder="you@church.org" value={churchFormData.email} onChange={e => setChurchFormData({...churchFormData, email: e.target.value})} /></Field>
-                <Field label="Invite Code"><Input placeholder="ABC123" value={churchFormData.code} onChange={e => setChurchFormData({...churchFormData, code: e.target.value.toUpperCase()})} maxLength="6" /></Field>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button variant="outline" onClick={() => { setShowChurchLogin(false); setChurchFormData({ email: "", code: "" }); }} style={{ flex: 1 }}>Back</Button>
-                  <Button onClick={async () => {
-                    if (!churchFormData.email || !churchFormData.code) {
-                      setError("Please fill in all fields");
-                      return;
-                    }
-                    setLoading(true);
-                    setError("");
-                    try {
-                      const res = await fetch(API + '/api/auth/church-login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(churchFormData)
-                      });
-                      const data = await res.json();
-                      if (!res.ok) throw new Error(data.message || 'Church login failed');
-                      localStorage.setItem('authToken', data.token);
-                      localStorage.setItem('user', JSON.stringify(data.user));
-                      onEnter(data.user);
-                    } catch (err) {
-                      setError(err.message || "Church login failed");
-                    } finally {
-                      setLoading(false);
-                    }
-                  }} style={{ flex: 1 }} disabled={loading}>{loading ? "Verifying..." : "Verify Code"}</Button>
-                </div>
-              </div>
-            )}
+            <div ref={googleBtnRef} style={{ width: "100%", minHeight: 44 }} />
           </div>
 
           <p className="faint" style={{ fontSize: 12, textAlign: "center", marginTop: 26, lineHeight: 1.6 }}>By continuing you agree to our Community Covenant & Privacy Policy.</p>

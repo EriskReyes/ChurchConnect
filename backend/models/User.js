@@ -6,10 +6,9 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: false },
   googleId: { type: String, sparse: true },
-  appleId: { type: String, sparse: true },
   authProvider: {
     type: String,
-    enum: ['local', 'google', 'apple', 'church'],
+    enum: ['local', 'google'],
     default: 'local'
   },
   role: {
@@ -17,6 +16,13 @@ const userSchema = new mongoose.Schema({
     enum: ['Admin', 'Pastor', 'Treasurer', 'Ministry Leader', 'Staff', 'Member', 'Visitor'],
     default: 'Member'
   },
+  status: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Approved'
+  },
+  approvedAt: Date,
+  approvedBy: String,
   church: { type: mongoose.Schema.Types.ObjectId, ref: 'Church' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
@@ -24,7 +30,6 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password') || !this.password) return next();
-
   try {
     const salt = await bcryptjs.genSalt(10);
     this.password = await bcryptjs.hash(this.password, salt);

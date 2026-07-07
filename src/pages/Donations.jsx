@@ -5,6 +5,8 @@ import { BarChart } from '../components/charts';
 import DB from '../data';
 import { useTranslation } from '../hooks/useTranslation';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export default function Donations({ role }) {
   const { t } = useTranslation();
   const [donations, setDonations] = useState(DB.donations);
@@ -24,10 +26,7 @@ export default function Donations({ role }) {
 
   const fetchDonations = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/donations", {
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
-      });
+      const response = await fetch(`${API}/api/donations`);
       if (response.ok) setDonations(await response.json());
     } catch (err) {
       console.error("Error fetching donations:", err);
@@ -49,12 +48,9 @@ export default function Donations({ role }) {
       };
 
       if (editing && selected) {
-        const response = await fetch(`http://localhost:5000/api/donations/${selected.id || selected._id}`, {
+        const response = await fetch(`${API}/api/donations/${selected.id || selected._id}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": token ? `Bearer ${token}` : ""
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         if (response.ok) {
@@ -64,12 +60,9 @@ export default function Donations({ role }) {
           setSelected(null);
         }
       } else {
-        const response = await fetch("http://localhost:5000/api/donations", {
+        const response = await fetch(`${API}/api/donations`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": token ? `Bearer ${token}` : ""
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         if (response.ok) {
@@ -94,10 +87,8 @@ export default function Donations({ role }) {
   const handleDeleteDonation = async (donation) => {
     if (!confirm("Delete this donation?")) return;
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/donations/${donation.id || donation._id}`, {
-        method: "DELETE",
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      const response = await fetch(`${API}/api/donations/${donation.id || donation._id}`, {
+        method: "DELETE"
       });
       if (response.ok) {
         setDonations(donations.filter(d => d.id !== donation.id && d._id !== donation._id));

@@ -31,6 +31,9 @@ const NAV = [
   { section: "System", items: [
     { key: "settings", label: "Settings", icon: Icon.Settings },
   ]},
+  { section: "Admin", items: [
+    { key: "pending-approvals", label: "Pending Approvals", icon: Icon.Users },
+  ]},
 ];
 
 const ROLES = {
@@ -58,7 +61,7 @@ export function canAccess(role, key) {
   return a === "*" || (Array.isArray(a) && a.includes(key));
 }
 
-export function Sidebar({ active, onNav, collapsed, role, onLogout, className }) {
+export function Sidebar({ active, onNav, collapsed, role, onLogout, className, pendingCount }) {
   const { t } = useTranslation();
   const isMobileSmall = typeof window !== 'undefined' && window.innerWidth < 480;
   const W = collapsed ? 76 : (isMobileSmall ? 220 : 256);
@@ -99,6 +102,7 @@ export function Sidebar({ active, onNav, collapsed, role, onLogout, className })
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {items.map(it => {
                   const on = active === it.key;
+                  const isPending = it.key === "pending-approvals";
                   return (
                     <button key={it.key} onClick={() => onNav(it.key)} title={collapsed ? it.translatedLabel : undefined}
                       style={{
@@ -111,7 +115,20 @@ export function Sidebar({ active, onNav, collapsed, role, onLogout, className })
                       onMouseEnter={e => { if (!on) e.currentTarget.style.background = "var(--surface-3)"; }}
                       onMouseLeave={e => { if (!on) e.currentTarget.style.background = "transparent"; }}>
                       {on && !collapsed && <span style={{ position: "absolute", left: -14, top: "50%", transform: "translateY(-50%)", width: 3.5, height: 22, borderRadius: 3, background: "var(--primary)" }} />}
-                      <it.icon size={20} />{!collapsed && it.translatedLabel}
+                      <it.icon size={20} />
+                      {!collapsed && (
+                        <span style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          {it.translatedLabel}
+                          {isPending && pendingCount > 0 && (
+                            <span style={{ fontSize: 11, fontWeight: 700, background: "#f59e0b", color: "#fff", borderRadius: 20, padding: "2px 7px", minWidth: 20, textAlign: "center" }}>
+                              {pendingCount}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                      {collapsed && isPending && pendingCount > 0 && (
+                        <span style={{ position: "absolute", top: 6, right: 6, width: 8, height: 8, borderRadius: "50%", background: "#f59e0b" }} />
+                      )}
                     </button>
                   );
                 })}
@@ -140,6 +157,7 @@ const PAGE_TITLES = {
   community: ["Community", "Posts and announcements"],
   chat: ["Chat", "Messages and team conversations"],
   settings: ["Settings", "Manage your account and church"],
+  "pending-approvals": ["Pending Approvals", "Review and approve new user registrations"],
 };
 
 export function Topbar({ page, role, onRole, onToggleSidebar, dark, onToggleDark, onLogout, isMobile }) {

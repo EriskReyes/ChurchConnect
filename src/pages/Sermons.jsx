@@ -64,14 +64,10 @@ export function NewSermonModal({ open, onClose, onSermonCreated }) {
     setError(null);
 
     try {
-      const token = localStorage.getItem("authToken");
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const response = await fetch(`${API_URL}/api/sermons`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           speaker,
@@ -171,13 +167,10 @@ function EditSermonModal({ open, onClose, onSermonUpdated, sermon }) {
     setError(null);
 
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/sermons/${sermon.id || sermon._id}`, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/api/sermons/${sermon.id || sermon._id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           speaker,
@@ -238,10 +231,9 @@ function SermonDetailModal({ sermon, onClose, onDelete, onEdit, role }) {
 
     setDeleting(true);
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/sermons/${sermon.id || sermon._id}`, {
-        method: "DELETE",
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/api/sermons/${sermon.id || sermon._id}`, {
+        method: "DELETE"
       });
 
       if (response.ok) onDelete();

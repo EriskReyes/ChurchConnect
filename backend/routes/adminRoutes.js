@@ -49,6 +49,51 @@ router.patch('/users/:id/role', checkCode, async (req, res) => {
   }
 });
 
+// GET /api/admin/pending-users — usuarios pendientes de aprobación
+router.get('/pending-users', checkCode, async (req, res) => {
+  try {
+    const users = await User.find({ status: 'Pending' }, '-password').sort({ createdAt: 1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /api/admin/pending-count — solo el número (sin contraseña)
+router.get('/pending-count', async (req, res) => {
+  try {
+    const count = await User.countDocuments({ status: 'Pending' });
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// POST /api/admin/approve-user/:userId — aprobar o rechazar usuario
+router.post('/approve-user/:userId', checkCode, async (req, res) => {
+  try {
+    const { action } = req.body;
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ message: 'Acción inválida. Usa "approve" o "reject"' });
+    }
+
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+    const newStatus = action === 'approve' ? 'Approved' : 'Rejected';
+    const updated = await User.findByIdAndUpdate(
+      req.params.userId,
+      { status: newStatus, approvedAt: new Date(), approvedBy: 'Admin' },
+      { new: true, select: '-password' }
+    );
+
+    const msg = action === 'approve' ? '✅ Usuario aprobado' : '❌ Usuario rechazado';
+    res.json({ message: msg, user: updated });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Cambiar contraseña de admin (requiere contraseña actual)
 router.post('/change-code', async (req, res) => {
   try {

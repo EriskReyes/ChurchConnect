@@ -35,7 +35,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', protect, authorize('Admin', 'Pastor', 'Ministry Leader'), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const member = await Member.create(req.body);
     res.status(201).json(member);
@@ -44,7 +44,7 @@ router.post('/', protect, authorize('Admin', 'Pastor', 'Ministry Leader'), async
   }
 });
 
-router.put('/:id', protect, authorize('Admin', 'Pastor', 'Ministry Leader'), async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const member = await Member.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(member);
@@ -53,7 +53,7 @@ router.put('/:id', protect, authorize('Admin', 'Pastor', 'Ministry Leader'), asy
   }
 });
 
-router.delete('/:id', protect, authorize('Admin', 'Pastor'), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     await Member.findByIdAndDelete(req.params.id);
     res.json({ message: 'Member deleted' });

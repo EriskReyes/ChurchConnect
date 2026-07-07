@@ -11,11 +11,6 @@ const memberSchema = new mongoose.Schema({
     default: 'Member'
   },
   ministry: String,
-  status: {
-    type: String,
-    enum: ['Active', 'Inactive', 'New', 'On Leave', 'Retired'],
-    default: 'Active'
-  },
   joinDate: { type: Date, default: Date.now },
   baptized: {
     type: String,

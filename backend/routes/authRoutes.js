@@ -2,7 +2,6 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import RoleCode from '../models/RoleCode.js';
-import InviteCode from '../models/InviteCode.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { OAuth2Client } from 'google-auth-library';
 
@@ -14,7 +13,7 @@ const generateToken = (id, role) => {
 
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please provide all required fields' });
     }
@@ -22,12 +21,11 @@ router.post('/register', async (req, res) => {
     if (userExists) {
       return res.status(400).json({ message: 'Email already in use' });
     }
-    const user = await User.create({ name, email, password, role: 'Member' });
-    const token = generateToken(user._id, user.role);
+    await User.create({ name, email, password, role: 'Member', status: 'Pending' });
     res.status(201).json({
       success: true,
-      token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      pending: true,
+      message: '⏳ Tu cuenta fue creada. El administrador revisará tu solicitud pronto.'
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -47,6 +45,13 @@ router.post('/login', async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    // Check approval status (skip for existing users without status)
+    if (user.status === 'Pending') {
+      return res.status(403).json({ message: '⏳ Tu cuenta está pendiente de aprobación del admin' });
+    }
+    if (user.status === 'Rejected') {
+      return res.status(403).json({ message: '❌ Tu solicitud fue rechazada. Contacta al administrador' });
     }
     const token = generateToken(user._id, user.role);
     res.status(200).json({
@@ -112,95 +117,6 @@ router.post('/google', async (req, res) => {
     });
   } catch (error) {
     res.status(401).json({ message: 'Google authentication failed: ' + error.message });
-  }
-});
-
-// Apple Sign In
-router.post('/apple', async (req, res) => {
-  try {
-    const { identityToken, user: appleUser } = req.body;
-    if (!identityToken) {
-      return res.status(400).json({ message: 'Apple identity token required' });
-    }
-
-    const decodedToken = jwt.decode(identityToken);
-    const { sub: appleId, email: appleEmail } = decodedToken;
-
-    let user = await User.findOne({ appleId });
-
-    if (!user) {
-      const email = appleEmail || appleUser?.email;
-      if (!email) {
-        return res.status(400).json({ message: 'Email required for first-time Apple Sign In' });
-      }
-
-      user = await User.findOne({ email });
-      if (user) {
-        user.appleId = appleId;
-        user.authProvider = 'apple';
-        await user.save();
-      } else {
-        const name = appleUser?.name || `User ${appleId.substring(0, 8)}`;
-        user = await User.create({
-          name,
-          email,
-          appleId,
-          authProvider: 'apple',
-          role: 'Member'
-        });
-      }
-    }
-
-    const token = generateToken(user._id, user.role);
-    res.status(200).json({
-      success: true,
-      token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
-    });
-  } catch (error) {
-    res.status(401).json({ message: 'Apple authentication failed: ' + error.message });
-  }
-});
-
-// Church ID (email + invite code)
-router.post('/church-login', async (req, res) => {
-  try {
-    const { email, code } = req.body;
-    if (!email || !code) {
-      return res.status(400).json({ message: 'Email and invite code required' });
-    }
-
-    const inviteCode = await InviteCode.findOne({ code: code.toUpperCase() }).populate('church');
-    if (!inviteCode) {
-      return res.status(401).json({ message: 'Invalid invite code' });
-    }
-
-    if (!inviteCode.isValid()) {
-      return res.status(401).json({ message: 'Invite code has expired or reached maximum uses' });
-    }
-
-    let user = await User.findOne({ email, church: inviteCode.church._id });
-
-    if (!user) {
-      user = await User.findOne({ email });
-      if (!user) {
-        return res.status(401).json({ message: 'User not found with this email' });
-      }
-      user.church = inviteCode.church._id;
-      user.authProvider = 'church';
-      await user.save();
-    }
-
-    await inviteCode.use();
-
-    const token = generateToken(user._id, user.role);
-    res.status(200).json({
-      success: true,
-      token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Church login failed: ' + error.message });
   }
 });
 

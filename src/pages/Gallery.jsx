@@ -23,11 +23,9 @@ export default function Gallery({ role, onNav }) {
   }, []);
 
   const fetchGallery = async () => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/gallery", {
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
-      });
+      const response = await fetch(`${API_URL}/api/gallery`);
       if (response.ok) setGallery(await response.json());
     } catch (err) {
       console.error("Error fetching gallery:", err);

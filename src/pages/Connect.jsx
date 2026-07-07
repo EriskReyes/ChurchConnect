@@ -5,6 +5,8 @@ import DB from '../data';
 import { useTranslation } from '../hooks/useTranslation';
 import ChatPage from './ChatPage';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const PRAYER_TONE = { Health: "danger", Guidance: "primary", Praise: "sage", Outreach: "warn", Youth: "primary" };
 
 function Ministries({ role, onMinistrySelect }) {
@@ -22,10 +24,7 @@ function Ministries({ role, onMinistrySelect }) {
 
   const fetchMinistries = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/ministries", {
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
-      });
+      const response = await fetch(`${API_URL}/api/ministries`);
       if (response.ok) {
         setMinistries(await response.json());
       }
@@ -52,13 +51,9 @@ function Ministries({ role, onMinistrySelect }) {
     };
 
     try {
-      const token = localStorage.getItem("authToken");
-      await fetch("http://localhost:5000/api/gallery", {
+      await fetch(`${API_URL}/api/gallery`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(photoData)
       });
     } catch (err) {
@@ -148,10 +143,8 @@ function MinistryDetailModal({ ministry, onClose, onDelete, role, onMinistryUpda
     if (!confirm("Delete this ministry?")) return;
     setDeleting(true);
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/ministries/${ministry.id || ministry._id}`, {
-        method: "DELETE",
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      const response = await fetch(`${API_URL}/api/ministries/${ministry.id || ministry._id}`, {
+        method: "DELETE"
       });
       if (response.ok) onDelete();
     } catch (err) {
@@ -164,13 +157,9 @@ function MinistryDetailModal({ ministry, onClose, onDelete, role, onMinistryUpda
   const handleSave = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/ministries/${ministry.id || ministry._id}`, {
+      const response = await fetch(`${API_URL}/api/ministries/${ministry.id || ministry._id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, lead, members: parseInt(members) || 0, desc })
       });
       if (response.ok) {
@@ -223,13 +212,9 @@ function NewMinistryModal({ open, onClose, onMinistryCreated }) {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/ministries", {
+      const response = await fetch(`${API_URL}/api/ministries`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, lead, members: parseInt(members) || 0, desc, color: "#3B5BA5", meeting: "TBD" })
       });
       if (!response.ok) throw new Error("Failed to create ministry");
@@ -478,10 +463,7 @@ export default function Connect({ role, onNav }) {
 
   const fetchGallery = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/gallery", {
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
-      });
+      const response = await fetch(`${API_URL}/api/gallery`);
       if (response.ok) setGallery(await response.json());
     } catch (err) {
       console.error("Error fetching gallery:", err);
@@ -533,7 +515,7 @@ export default function Connect({ role, onNav }) {
       try {
         await fetch(`${API_URL}/api/gallery`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": token ? `Bearer ${token}` : "" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(img)
         });
       } catch (err) { console.error("Error saving photo:", err); }

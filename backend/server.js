@@ -13,6 +13,7 @@ import documentRoutes from './routes/documentRoutes.js';
 import sermonRoutes from './routes/sermonRoutes.js';
 import prayerRequestRoutes from './routes/prayerRequestRoutes.js';
 import postRoutes from './routes/postRoutes.js';
+import galleryRoutes from './routes/galleryRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import AdminCode from './models/AdminCode.js';
 
@@ -48,6 +49,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/sermons', sermonRoutes);
 app.use('/api/prayer-requests', prayerRequestRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/gallery', galleryRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {

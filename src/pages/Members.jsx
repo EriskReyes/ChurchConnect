@@ -4,13 +4,14 @@ import { Card, Badge, Button, Avatar, Stat, Modal, Field, Input, SearchInput, Se
 import DB from '../data';
 import { useTranslation } from '../hooks/useTranslation';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 function NewMemberModal({ open, onClose, onMemberCreated }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("Member");
   const [ministry, setMinistry] = useState("Worship");
-  const [status, setStatus] = useState("New");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -24,20 +25,11 @@ function NewMemberModal({ open, onClose, onMemberCreated }) {
     setError(null);
 
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/members", {
+      const response = await fetch(`${API}/api/members`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
-          email,
-          phone,
-          role,
-          ministry,
-          status,
+          name, email, phone, role, ministry,
           joined: new Date().toISOString().split('T')[0],
           giving: 0,
           group: "New Member"
@@ -49,12 +41,8 @@ function NewMemberModal({ open, onClose, onMemberCreated }) {
       const newMember = await response.json();
       onMemberCreated(newMember);
 
-      setName("");
-      setEmail("");
-      setPhone("");
-      setRole("Member");
-      setMinistry("Worship");
-      setStatus("New");
+      setName(""); setEmail(""); setPhone("");
+      setRole("Member"); setMinistry("Worship");
       onClose();
     } catch (err) {
       setError(err.message || "Error creating member");
@@ -75,7 +63,6 @@ function NewMemberModal({ open, onClose, onMemberCreated }) {
           <Field label="Role"><Select value={role} onChange={e => setRole(e.target.value)} options={["Member", "Ministry Leader", "Staff", "Pastor", "Admin"]} /></Field>
           <Field label="Ministry"><Select value={ministry} onChange={e => setMinistry(e.target.value)} options={["Worship", "Youth", "Outreach", "Children", "Hospitality", "Discipleship"]} /></Field>
         </div>
-        <Field label="Status"><Select value={status} onChange={e => setStatus(e.target.value)} options={["New", "Active", "Inactive"]} /></Field>
       </div>
     </Modal>
   );
@@ -87,7 +74,6 @@ function EditMemberModal({ open, onClose, onMemberUpdated, member }) {
   const [phone, setPhone] = useState(member?.phone || "");
   const [role, setRole] = useState(member?.role || "Member");
   const [ministry, setMinistry] = useState(member?.ministry || "Worship");
-  const [status, setStatus] = useState(member?.status || "New");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -101,21 +87,10 @@ function EditMemberModal({ open, onClose, onMemberUpdated, member }) {
     setError(null);
 
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/members/${member.id || member._id}`, {
+      const response = await fetch(`${API}/api/members/${member.id || member._id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? `Bearer ${token}` : ""
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          role,
-          ministry,
-          status
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone, role, ministry })
       });
 
       if (!response.ok) throw new Error("Failed to update member");
@@ -142,11 +117,17 @@ function EditMemberModal({ open, onClose, onMemberUpdated, member }) {
           <Field label="Role"><Select value={role} onChange={e => setRole(e.target.value)} options={["Member", "Ministry Leader", "Staff", "Pastor", "Admin"]} /></Field>
           <Field label="Ministry"><Select value={ministry} onChange={e => setMinistry(e.target.value)} options={["Worship", "Youth", "Outreach", "Children", "Hospitality", "Discipleship"]} /></Field>
         </div>
-        <Field label="Status"><Select value={status} onChange={e => setStatus(e.target.value)} options={["New", "Active", "Inactive"]} /></Field>
       </div>
     </Modal>
   );
 }
+
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const isNewMember = (m) => {
+  const d = m.createdAt || m.joined;
+  if (!d) return false;
+  return Date.now() - new Date(d).getTime() < ONE_WEEK_MS;
+};
 
 export default function Members({ role }) {
   const { t } = useTranslation();
@@ -165,10 +146,7 @@ export default function Members({ role }) {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("authToken");
-      const response = await fetch("http://localhost:5000/api/members", {
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
-      });
+      const response = await fetch(`${API}/api/members`);
       if (response.ok) {
         const data = await response.json();
         setMembers(data);
@@ -214,7 +192,10 @@ export default function Members({ role }) {
             <h3 style={{ fontSize: 15.5, fontWeight: 700, color: "var(--text)" }}>{m.name}</h3>
             <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{m.email}</div>
             <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>{m.role}</div>
-            <Badge tone="primary" style={{ marginTop: 10 }}>{m.ministry}</Badge>
+            <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 10, flexWrap: "wrap" }}>
+              <Badge tone="primary">{m.ministry}</Badge>
+              {isNewMember(m) && <Badge tone="success" style={{ fontSize: 11 }}>New</Badge>}
+            </div>
           </Card>
         ))}
       </div>
@@ -249,10 +230,8 @@ function MemberDetailModal({ member, onClose, onDelete, onEdit, role, onExpandAv
 
     setDeleting(true);
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await fetch(`http://localhost:5000/api/members/${member.id || member._id}`, {
-        method: "DELETE",
-        headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      const response = await fetch(`${API}/api/members/${member.id || member._id}`, {
+        method: "DELETE"
       });
 
       if (response.ok) {
@@ -276,8 +255,9 @@ function MemberDetailModal({ member, onClose, onDelete, onEdit, role, onExpandAv
           </div>
         </div>
         <h3 style={{ fontSize: 20, fontWeight: 700, marginTop: 14, color: "var(--text)" }}>{member.name}</h3>
-        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 8, justifyContent: "center", flexWrap: "wrap" }}>
           <Badge tone="primary">{member.role}</Badge>
+          {isNewMember(member) && <Badge tone="success" style={{ fontSize: 11 }}>New</Badge>}
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>

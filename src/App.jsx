@@ -17,6 +17,7 @@ import ChatPage from './pages/ChatPage';
 import Gallery from './pages/Gallery';
 import Flyers from './pages/Flyers';
 import Staff from './pages/Staff';
+import AdminPendingUsers from './pages/AdminPendingUsers';
 
 const TWEAK_DEFAULTS = {
   "primaryColor": "#3B5BA5",
@@ -43,6 +44,7 @@ const PAGES = {
   flyers: Flyers,
   staff: Staff,
   reports: Reports,
+  "pending-approvals": AdminPendingUsers,
 };
 
 function Placeholder({ page, onNav }) {
@@ -78,6 +80,7 @@ function App() {
   const [collapsed, setCollapsed] = useState(t.sidebar === "icons");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -90,6 +93,21 @@ function App() {
   useEffect(() => {
     if (!canAccess(role, page) && page !== "settings") setPage("dashboard");
   }, [role]);
+
+  // Poll pending count for Admin badge
+  useEffect(() => {
+    if (role !== 'Admin' && role !== 'Pastor') return;
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const fetchCount = () => {
+      fetch(`${API}/api/admin/pending-count`)
+        .then(r => r.ok ? r.json() : { count: 0 })
+        .then(d => setPendingCount(d.count || 0))
+        .catch(() => {});
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 60000);
+    return () => clearInterval(interval);
+  }, [role, authed]);
 
   const theme = t.dark ? "dark" : "light";
   const rootStyle = { "--primary": t.primaryColor };
@@ -123,11 +141,11 @@ function App() {
 
   return (
     <div className="app-shell" data-theme={theme} data-density={t.density} style={rootStyle}>
-      {!isMobile && <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} />}
+      {!isMobile && <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} pendingCount={pendingCount} />}
       {isMobile && sidebarOpen && (
         <>
           <div className="sidebar-backdrop active" onClick={() => setSidebarOpen(false)} />
-          <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} className="mobile-open" />
+          <Sidebar active={page} onNav={handleSidebarNav} collapsed={collapsed} role={role} onLogout={handleLogout} className="mobile-open" pendingCount={pendingCount} />
         </>
       )}
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", height: "100%" }}>
