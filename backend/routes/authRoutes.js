@@ -169,6 +169,26 @@ router.post('/restore-role', protect, async (req, res) => {
   }
 });
 
+// Update own profile (name, phone, bio, avatar) — no protect middleware needed, uses userId from token header
+router.put('/profile', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ message: 'No token' });
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { name, phone, bio, avatar } = req.body;
+    const updated = await User.findByIdAndUpdate(
+      decoded.id,
+      { name, phone, bio, avatar, updatedAt: new Date() },
+      { new: true, select: '-password' }
+    );
+    if (!updated) return res.status(404).json({ message: 'User not found' });
+    res.json({ user: updated });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Delete account
 router.delete('/delete-account', protect, async (req, res) => {
   try {

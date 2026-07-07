@@ -23,6 +23,9 @@ const userSchema = new mongoose.Schema({
   },
   approvedAt: Date,
   approvedBy: String,
+  phone: { type: String, default: '' },
+  bio: { type: String, default: '' },
+  avatar: { type: String, default: '' },
   church: { type: mongoose.Schema.Types.ObjectId, ref: 'Church' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

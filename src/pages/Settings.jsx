@@ -185,14 +185,24 @@ export default function Settings({ role }) {
     setAdminMsg(null);
   };
 
-  const [profileImage, setProfileImage] = useState(null);
   const fileInputRef = useRef(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingChurch, setEditingChurch] = useState(false);
-  const [profileData, setProfileData] = useState({ firstName: "", lastName: "", email: "", phone: "", bio: "" });
+  const [savingProfile, setSavingProfile] = useState(false);
   const [churchData, setChurchData] = useState({ name: "", founded: "", address: "", city: "", description: "" });
-  const [tempProfileData, setTempProfileData] = useState(profileData);
   const [tempChurchData, setTempChurchData] = useState(churchData);
+
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const nameParts = (storedUser.name || '').trim().split(' ');
+  const [profileData, setProfileData] = useState({
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' ') || '',
+    email: storedUser.email || '',
+    phone: storedUser.phone || '',
+    bio: storedUser.bio || '',
+  });
+  const [profileImage, setProfileImage] = useState(storedUser.avatar || null);
+  const [tempProfileData, setTempProfileData] = useState(profileData);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -207,6 +217,37 @@ export default function Settings({ role }) {
 
     const url = await readAsDataURL(compressed);
     setProfileImage(url);
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const token = localStorage.getItem('authToken');
+    try {
+      const res = await fetch(`${API}/api/auth/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: `${tempProfileData.firstName} ${tempProfileData.lastName}`.trim(),
+          phone: tempProfileData.phone,
+          bio: tempProfileData.bio,
+          avatar: profileImage || '',
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const updatedUser = { ...storedUser, ...data.user };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setProfileData(tempProfileData);
+        setEditingProfile(false);
+      } else {
+        alert('Error al guardar el perfil');
+      }
+    } catch {
+      alert('Error de conexión');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
 
@@ -314,7 +355,7 @@ export default function Settings({ role }) {
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 }}>
                   <Button variant="outline" onClick={() => setEditingProfile(false)}>Cancel</Button>
-                  <Button icon={Icon.Check} onClick={() => { setProfileData(tempProfileData); setEditingProfile(false); }}>Save changes</Button>
+                  <Button icon={Icon.Check} onClick={handleSaveProfile} disabled={savingProfile}>{savingProfile ? "Guardando..." : "Save changes"}</Button>
                 </div>
               </>
             )}

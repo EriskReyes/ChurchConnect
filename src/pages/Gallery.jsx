@@ -49,25 +49,36 @@ export default function Gallery({ role, onNav }) {
       return;
     }
 
-    let addedCount = 0;
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     const newImages = [];
 
     for (const file of selectedFiles) {
-      const newImg = {
-        id: Math.max(0, ...gallery.map(img => img.id || 0)) + addedCount + 1,
+      const payload = {
         name: file.name,
         url: file.url,
         category: selectedAlbum,
+        type: file.type || 'photo',
         date: new Date().toISOString().split('T')[0],
-        uploadedBy: "You",
-        type: file.type
+        uploadedBy: user.name || 'Admin',
       };
 
-      newImages.push(newImg);
-      addedCount++;
+      try {
+        const res = await fetch(`${API_URL}/api/gallery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const saved = await res.json();
+          newImages.push(saved);
+        }
+      } catch (err) {
+        console.error('Error guardando imagen:', err);
+      }
     }
 
-    setGallery(prev => [...prev, ...newImages]);
+    if (newImages.length) setGallery(prev => [...prev, ...newImages]);
     setImgName("");
     setImgUrl("");
     setUploadType("photo");
