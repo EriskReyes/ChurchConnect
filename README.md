@@ -7,6 +7,8 @@ Eine umfassende digitale Plattform zur Verwaltung von Kirchen und religiösen Ge
 
 
 https://github.com/user-attachments/assets/2ad708bc-ade6-41c4-b876-13a330bb6956
+
+
 Kurzes Pitch-Video (Englisch, 1:30)
 
 
