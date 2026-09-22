@@ -2,7 +2,7 @@
 
 Eine umfassende digitale Plattform zur Verwaltung von Kirchen und religiösen Gemeinschaften. ChurchConnect vereinfacht die Verwaltung von Mitgliedern, Veranstaltungen, Spenden, Diensten und Kommunikation innerhalb deiner Gemeinde.
 
-##pitch 📹
+## 📹 pitch 
 
 
 https://github.com/user-attachments/assets/543a6989-43a5-4faa-8f92-343c29c3ffbe
