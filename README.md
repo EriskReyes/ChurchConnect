@@ -5,7 +5,10 @@ Eine umfassende digitale Plattform zur Verwaltung von Kirchen und religiösen Ge
 ## 📹 pitch 
 
 
-https://github.com/user-attachments/assets/543a6989-43a5-4faa-8f92-343c29c3ffbe
+
+https://github.com/user-attachments/assets/2ad708bc-ade6-41c4-b876-13a330bb6956
+
+
 
 
 ## ✨ Hauptmerkmale
